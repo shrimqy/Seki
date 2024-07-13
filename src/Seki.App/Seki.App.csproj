@@ -12,6 +12,9 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Views\OnBoarding\OnboardingPage.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -36,6 +39,21 @@
   -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Dialogs\" />
+    <Folder Include="Helpers\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Data\" />
+    <Folder Include="Utils\" />
+    <Folder Include="UserControls\" />
+    <Folder Include="Strings\" />
+    <Folder Include="ViewModels\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\OnBoarding\OnboardingPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <!--
