@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Seki.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Seki.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
