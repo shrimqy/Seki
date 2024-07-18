@@ -5,6 +5,6 @@ namespace Seki.App.Services
 {
     public class NavigationService
     {
-
+        private Frame _frame;
     }
 }
