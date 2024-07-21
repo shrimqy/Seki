@@ -27,6 +27,8 @@ namespace Seki.App
     /// </summary>
     public partial class App : Application
     {
+        private ClipboardService _clipboardService;
+        private WebSocketService _webSocketService;
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -45,7 +47,9 @@ namespace Seki.App
             m_window = new MainWindow();
             m_window.Activate();
 
-            WebSocketService.Instance.Start();
+            _webSocketService = WebSocketService.Instance;
+            _webSocketService.Start();
+            _clipboardService = new ClipboardService();
         }
 
         private Window m_window;
