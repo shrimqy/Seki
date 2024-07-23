@@ -46,7 +46,6 @@
     <Folder Include="Dialogs\" />
     <Folder Include="Helpers\" />
     <Folder Include="Extensions\" />
-    <Folder Include="Data\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Utils\" />
     <Folder Include="UserControls\" />

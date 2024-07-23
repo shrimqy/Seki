@@ -5,33 +5,27 @@ using System.Text;
 using System.Text.Json;
 using NetCoreServer;
 using Windows.ApplicationModel.DataTransfer;
+using Seki.App.Data.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Seki.App.Services
 {
-    public class MessageType
+    public class SekiSession : WsSession
     {
-        public const string Error = "error";
-        public const string Link = "link";
-        public const string Clipboard = "clipboard";
-        public const string Response = "response";
-    }
-    public class Message
-    {
-        public string Type { get; set; }
-        public string Content { get; set; }
-    }
+        public SekiSession(WsServer server) : base(server) { }
 
-    public class SekiSession(WsServer server) : WsSession(server)
-    {
         public override void OnWsConnected(HttpRequest request)
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} connected!");
-
-            // Send invite message
-            string message = "Hello from Seki WebSocket! Please send a message or '!' to disconnect the client!";
-            SendTextAsync(message);
+            SendMessage(SocketMessageType.Response, new Response { Content = "Connected" });
+            SendMessage(SocketMessageType.Notification, new Notification
+            {
+                AppName = "Whatsapp",
+                Actions = ["Like", "Reply"],
+                NotificationContent = "myre ODI va"
+            });
         }
-
+            
         public override void OnWsDisconnected()
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} disconnected!");
@@ -40,15 +34,16 @@ namespace Seki.App.Services
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
             string jsonMessage = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
-            System.Diagnostics.Debug.WriteLine("Incoming: " + jsonMessage);
+            System.Diagnostics.Debug.WriteLine(jsonMessage);
+
             try
             {
-                Message message = JsonSerializer.Deserialize<Message>(jsonMessage);
+                SocketMessage message = JsonSerializer.Deserialize<SocketMessage>(jsonMessage, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 HandleMessage(message);
             }
             catch (JsonException)
             {
-                SendMessage(MessageType.Error, "Invalid message format");
+                SendMessage(SocketMessageType.Response, new Response { Content = "Invalid message format" });
             }
 
             // If the buffer starts with '!' then disconnect the current session
@@ -56,30 +51,48 @@ namespace Seki.App.Services
                 Close(1000);
         }
 
-        public void HandleMessage(Message message)
+        public void HandleMessage(SocketMessage message)
         {
             switch (message.Type)
             {
-                case MessageType.Link:
+                case SocketMessageType.Link:
                     // Handle Links
-                    SendMessage(MessageType.Response, "Success");
                     break;
-                case MessageType.Clipboard:
-                    // Handle ClipboardText
-                    var ClipBoard = new DataPackage();
-                    ClipBoard.SetText(message.Content);
-                    Clipboard.SetContent(ClipBoard); 
-                    SendMessage(MessageType.Response, "Success");
+                case SocketMessageType.Clipboard:
+                    // Handle Clipboard
+                    ClipboardMessage clipboardMessage = JsonSerializer.Deserialize<ClipboardMessage>(message.Content);
+                    var clipboardData = new DataPackage();
+                    clipboardData.SetText(clipboardMessage.Content);
+                    Clipboard.SetContent(clipboardData);
+                    //SendMessage(SocketMessageType.Clipboard, new ClipboardMessage { Content = clipboardData});
+                    break;
+                case SocketMessageType.Notification:
+                    var notification = JsonSerializer.Deserialize<Notification>(message.Content);
+                    // Handle notification
+                    System.Diagnostics.Debug.WriteLine($"Received notification: {notification.AppName}, {notification.NotificationContent}");
+                    break;
+                case SocketMessageType.Permission:
+                    // Handle Permission
+                    //SendMessage(new Response { Content = "Permission request received" });
+                    break;
+                case SocketMessageType.Message:
+                    // Handle Message
+                    //SendMessage(new Response { Content = "Message received" });
+                    break;
+                case SocketMessageType.Media:
+                    // Handle Media Control
+                    //SendMessage(new Response { Content = "Media control received" });
                     break;
                 default:
-                    SendMessage(MessageType.Error, "Unknown message type");
+                    //SendMessage(new Response { Content = "Unknown message type" });
                     break;
             }
         }
-        public void SendMessage(string type, string content)
+
+        public void SendMessage(string type, object content)
         {
-            Message response = new() { Type = type, Content = content };
-            string jsonResponse = JsonSerializer.Serialize(response);
+            string jsonResponse = JsonSerializer.Serialize(content);
+            System.Diagnostics.Debug.WriteLine($"{jsonResponse}");
             ((SekiServer)Server).MulticastText(jsonResponse);
         }
 
@@ -89,8 +102,10 @@ namespace Seki.App.Services
         }
     }
 
-    public class SekiServer(IPAddress address, int port) : WsServer(address, port)
+    public class SekiServer : WsServer
     {
+        public SekiServer(IPAddress address, int port) : base(address, port) { }
+
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
         protected override void OnError(SocketError error)
@@ -143,10 +158,11 @@ namespace Seki.App.Services
         private void OnClipboardContentChanged(object sender, string e)
         {
             System.Diagnostics.Debug.WriteLine("Clipboard changed: " + e);
-            _webSocketServer.MulticastText(JsonSerializer.Serialize(new Message { Type = MessageType.Clipboard, Content = e }));
+            var clipboardMessage = new ClipboardMessage { Content = e };
+            _webSocketServer.MulticastText(JsonSerializer.Serialize(clipboardMessage));
         }
 
-        static private string GetLocalIPAddress()
+        private static string GetLocalIPAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             foreach (var ip in host.AddressList)
@@ -158,6 +174,5 @@ namespace Seki.App.Services
             }
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
-
     }
 }
