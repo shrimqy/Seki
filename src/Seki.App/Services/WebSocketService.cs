@@ -7,23 +7,26 @@ using NetCoreServer;
 using Windows.ApplicationModel.DataTransfer;
 using Seki.App.Data.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Seki.App.Helpers;
 
 namespace Seki.App.Services
 {
-    public class SekiSession : WsSession
+    public class SekiSession(WsServer server) : WsSession(server)
     {
-        public SekiSession(WsServer server) : base(server) { }
-
         public override void OnWsConnected(HttpRequest request)
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} connected!");
-            SendMessage(SocketMessageType.Response, new Response { Content = "Connected" });
-            SendMessage(SocketMessageType.Notification, new Notification
-            {
-                AppName = "Whatsapp",
-                Actions = ["Like", "Reply"],
-                NotificationContent = "myre ODI va"
-            });
+            //var message = new NotificationMessage
+            //{
+            //    Type = SocketMessageType.Notification,
+            //    AppName = "Whatsapp",
+            //    Header = "Jerin",
+            //    Content = "content",
+            //    Actions = { new NotificationAction { ActionId = "0", Label = "Reply" } }
+            //};
+            
+            //SendMessage(message);
+            SendMessage(new Response { ResType = "Status", Content = "Connected" });
         }
             
         public override void OnWsDisconnected()
@@ -38,60 +41,41 @@ namespace Seki.App.Services
 
             try
             {
-                SocketMessage message = JsonSerializer.Deserialize<SocketMessage>(jsonMessage, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                SocketMessage message = SocketMessageSerializer.DeserializeMessage(jsonMessage);
                 HandleMessage(message);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                SendMessage(SocketMessageType.Response, new Response { Content = "Invalid message format" });
+                System.Diagnostics.Debug.WriteLine($"JSON deserialization error: {ex.Message}");
+                SendMessage(new Response { Content = "Invalid message format" });
             }
 
-            // If the buffer starts with '!' then disconnect the current session
             if (jsonMessage == "!")
                 Close(1000);
         }
 
         public void HandleMessage(SocketMessage message)
         {
-            switch (message.Type)
+            switch (message)
             {
-                case SocketMessageType.Link:
-                    // Handle Links
-                    break;
-                case SocketMessageType.Clipboard:
-                    // Handle Clipboard
-                    ClipboardMessage clipboardMessage = JsonSerializer.Deserialize<ClipboardMessage>(message.Content);
+                case ClipboardMessage clipboardMessage:
                     var clipboardData = new DataPackage();
                     clipboardData.SetText(clipboardMessage.Content);
                     Clipboard.SetContent(clipboardData);
-                    //SendMessage(SocketMessageType.Clipboard, new ClipboardMessage { Content = clipboardData});
                     break;
-                case SocketMessageType.Notification:
-                    var notification = JsonSerializer.Deserialize<Notification>(message.Content);
+                case NotificationMessage notificationMessage:
                     // Handle notification
-                    System.Diagnostics.Debug.WriteLine($"Received notification: {notification.AppName}, {notification.NotificationContent}");
+                    System.Diagnostics.Debug.WriteLine($"Received notification: {notificationMessage.AppName}, {notificationMessage.Content}");
                     break;
-                case SocketMessageType.Permission:
-                    // Handle Permission
-                    //SendMessage(new Response { Content = "Permission request received" });
-                    break;
-                case SocketMessageType.Message:
-                    // Handle Message
-                    //SendMessage(new Response { Content = "Message received" });
-                    break;
-                case SocketMessageType.Media:
-                    // Handle Media Control
-                    //SendMessage(new Response { Content = "Media control received" });
-                    break;
+                // Add more cases for other message types
                 default:
-                    //SendMessage(new Response { Content = "Unknown message type" });
+                    SendMessage(new Response { Content = "Unknown message type" });
                     break;
             }
         }
-
-        public void SendMessage(string type, object content)
+        public void SendMessage(object content)
         {
-            string jsonResponse = JsonSerializer.Serialize(content);
+            string jsonResponse = SocketMessageSerializer.Serialize(content);
             System.Diagnostics.Debug.WriteLine($"{jsonResponse}");
             ((SekiServer)Server).MulticastText(jsonResponse);
         }
@@ -102,10 +86,8 @@ namespace Seki.App.Services
         }
     }
 
-    public class SekiServer : WsServer
+    public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
-        public SekiServer(IPAddress address, int port) : base(address, port) { }
-
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
         protected override void OnError(SocketError error)
