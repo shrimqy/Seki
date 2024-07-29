@@ -107,11 +107,10 @@ namespace Seki.App.Services
         private WebSocketService()
         {
             string ipAddress = GetLocalIPAddress();
-            _webSocketServer = new SekiServer(IPAddress.Parse(ipAddress), 8080);
+            _webSocketServer = new SekiServer(IPAddress.Parse(ipAddress), 5149);
             _clipboardService = new ClipboardService();
             _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
         }
-
         // Singleton instance
         public static WebSocketService Instance => _instance ??= new WebSocketService();
 
@@ -137,11 +136,21 @@ namespace Seki.App.Services
 
         public bool IsRunning => _isRunning;
 
-        private void OnClipboardContentChanged(object sender, string e)
+        private string lastClipboardContent = "";
+
+        private void OnClipboardContentChanged(object sender, string newContent)
         {
-            System.Diagnostics.Debug.WriteLine("Clipboard changed: " + e);
-            var clipboardMessage = new ClipboardMessage { Content = e };
-            _webSocketServer.MulticastText(JsonSerializer.Serialize(clipboardMessage));
+            if (newContent != lastClipboardContent)
+            {
+                System.Diagnostics.Debug.WriteLine("Clipboard changed: " + newContent);
+                var clipboardMessage = new ClipboardMessage { Content = newContent };
+                _webSocketServer.MulticastText(JsonSerializer.Serialize(clipboardMessage));
+                lastClipboardContent = newContent;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Clipboard content unchanged, not sending message");
+            }
         }
 
         private static string GetLocalIPAddress()

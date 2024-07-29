@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Seki.App.Data.Models
 {
 
     public enum SocketMessageType
     {
+        Response,
         Clipboard,
         Notification,
-        Response,
         Permission,
         Media,
         Link,
@@ -17,6 +18,7 @@ namespace Seki.App.Data.Models
 
     public class SocketMessage
     {
+        [JsonPropertyName("type")]
         public SocketMessageType Type { get; set; }
     }
 
@@ -42,6 +44,7 @@ namespace Seki.App.Data.Models
 
     public class ClipboardMessage : SocketMessage
     {
+        [JsonPropertyName("content")]
         public string Content { get; set; }
 
         public ClipboardMessage()
