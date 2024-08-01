@@ -88,6 +88,21 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("text")]
         public string Text { get; set; }
 
+        [JsonPropertyName("tag")]
+        public string Tag { get; set; }
+
+        [JsonPropertyName("groupKey")]
+        public string GroupKey { get; set; }
+
+        [JsonPropertyName("appIcon")]
+        public string AppIcon { get; set; }
+
+        [JsonPropertyName("bigPicture")]
+        public string BigPicture { get; set; }
+
+        [JsonPropertyName("largeIcon")]
+        public string LargeIcon { get; set; }
+
         public List<NotificationAction> Actions { get; set; } = new List<NotificationAction>();
     }
 

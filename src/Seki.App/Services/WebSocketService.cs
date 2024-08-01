@@ -13,6 +13,10 @@ using System.Linq;
 using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.AppNotifications;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Windows.Storage.Streams;
+using Windows.Storage;
 
 
 namespace Seki.App.Services
@@ -108,7 +112,7 @@ namespace Seki.App.Services
                     {
                         // Handle notification
                         ShowDesktopNotification(notificationMessage);
-                        System.Diagnostics.Debug.WriteLine($"Received notification: {notificationMessage.Title}, {notificationMessage.Text}");
+                        System.Diagnostics.Debug.WriteLine($"Received notification: {notificationMessage}");
                         // You can add more specific handling for the notification here
                     }
                     break;
@@ -127,28 +131,84 @@ namespace Seki.App.Services
             }
         }
         private static List<AppNotification> notificationHistory = new List<AppNotification>();
-        private static void ShowDesktopNotification(NotificationMessage notificationMessage)
+
+        private static Stream Base64ToStream(string base64)
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            return new MemoryStream(bytes);
+        }
+        private static async void ShowDesktopNotification(NotificationMessage notificationMessage)
         {
             if (notificationMessage.Title != null)
             {
-
-                // Create a unique tag for the notification
-                string tag = $"{notificationMessage.AppName}";
-                string group = $"{notificationMessage.Title}";
-
-                var appNotification = new AppNotificationBuilder()
+                string tag = $"{notificationMessage.Tag}";
+                string group = $"{notificationMessage.GroupKey}";
+                var builder = new AppNotificationBuilder()
                     .AddText(notificationMessage.AppName, new AppNotificationTextProperties().SetMaxLines(1))
                     .AddText(notificationMessage.Title)
                     .AddText(notificationMessage.Text)
                     .SetTag(tag)
-                    .SetGroup(group)
-                    .BuildNotification();
-                
+                    .SetGroup(group);
+
+                // Add large icon
+                if (!string.IsNullOrEmpty(notificationMessage.LargeIcon))
+                {
+                    using (var stream = Base64ToStream(notificationMessage.LargeIcon))
+                    {
+                        var randomAccessStream = await ConvertToRandomAccessStreamAsync(stream);
+                        builder.SetAppLogoOverride(new Uri("ms-appdata:///local/largeicon.png"), AppNotificationImageCrop.Circle);
+                        await SaveStreamToFileAsync(randomAccessStream, "largeicon.png");
+                    }
+                }
+                // Add app icon
+                else if (!string.IsNullOrEmpty(notificationMessage.AppIcon))
+                {
+                    using (var stream = Base64ToStream(notificationMessage.AppIcon))
+                    {
+                        var randomAccessStream = await ConvertToRandomAccessStreamAsync(stream);
+                        builder.SetAppLogoOverride(new Uri("ms-appdata:///local/appicon.png"), AppNotificationImageCrop.Circle);
+                        await SaveStreamToFileAsync(randomAccessStream, "appicon.png");
+                    }
+                }
+
+                // Add big picture
+                //if (!string.IsNullOrEmpty(notificationMessage.BigPicture))
+                //{
+                //    using (var stream = Base64ToStream(notificationMessage.BigPicture))
+                //    {
+                //        var randomAccessStream = await ConvertToRandomAccessStreamAsync(stream);
+                //        builder.AddImage(new Uri("ms-appdata:///local/bigpicture.png"));
+                //        await SaveStreamToFileAsync(randomAccessStream, "bigpicture.png");
+                //    }
+                //}
+
+                var appNotification = builder.BuildNotification();
+
                 appNotification.ExpiresOnReboot = true;
                 AppNotificationManager.Default.Show(appNotification);
                 notificationHistory.Add(appNotification);
-            } 
-            System.Diagnostics.Debug.WriteLine($"Showed or updated notification: {notificationMessage.Title}, {notificationMessage.Text}");
+            }
+            System.Diagnostics.Debug.WriteLine($"Showed or updated notification: {notificationMessage}");
+        }
+
+        private static async Task<IRandomAccessStream> ConvertToRandomAccessStreamAsync(Stream stream)
+        {
+            var randomAccessStream = new InMemoryRandomAccessStream();
+            var outputStream = randomAccessStream.GetOutputStreamAt(0);
+            await RandomAccessStream.CopyAsync(stream.AsInputStream(), outputStream);
+            await outputStream.FlushAsync();
+            return randomAccessStream;
+        }
+
+        private static async Task SaveStreamToFileAsync(IRandomAccessStream stream, string fileName)
+        {
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            StorageFile file = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+            using (var fileStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                await RandomAccessStream.CopyAsync(stream, fileStream);
+                await fileStream.FlushAsync();
+            }
         }
 
 
@@ -240,5 +300,7 @@ namespace Seki.App.Services
             }
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
+
+        
     }
 }
