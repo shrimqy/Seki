@@ -23,14 +23,26 @@ namespace Seki.App.Helpers
 
         public static SocketMessage DeserializeMessage(string json)
         {
-            var baseMessage = JsonSerializer.Deserialize<SocketMessage>(json, options);
-            return baseMessage.Type switch
+            var jsonElement = JsonSerializer.Deserialize<JsonElement>(json, options);
+            if (jsonElement.TryGetProperty("type", out var typeElement))
             {
-                SocketMessageType.Notification => JsonSerializer.Deserialize<NotificationMessage>(json, options),
-                SocketMessageType.Clipboard => JsonSerializer.Deserialize<ClipboardMessage>(json, options),
-                // Add more cases for other message types
-                _ => baseMessage // Return base message if type is unknown
-            };
+                if (typeElement.ValueKind == JsonValueKind.String)
+                {
+                    string typeString = typeElement.GetString();
+                    if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
+                    {
+                        return messageType switch
+                        {
+                            SocketMessageType.Notification => JsonSerializer.Deserialize<NotificationMessage>(json, options),
+                            SocketMessageType.Clipboard => JsonSerializer.Deserialize<ClipboardMessage>(json, options),
+                            SocketMessageType.Response => JsonSerializer.Deserialize<Response>(json, options),
+                            // Add more cases for other message types
+                            _ => JsonSerializer.Deserialize<SocketMessage>(json, options) // Return base message if type is unknown
+                        };
+                    }
+                }
+            }
+            throw new JsonException("Invalid or missing 'type' property in the JSON message.");
         }
     }
 }

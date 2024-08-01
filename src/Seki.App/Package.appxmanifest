@@ -5,7 +5,8 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  IgnorableNamespaces="uap rescap uap3">
 
   <Identity
     Name="690be19d-82e3-4871-96b7-d592ec464833"
@@ -47,5 +48,10 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <uap3:Capability Name="userNotificationListener"/>
+    <Capability Name="internetClientServer"/>
+    <Capability Name="internetClient"/>
+    <uap:Capability Name="musicLibrary"/>
+    <DeviceCapability Name="bluetooth"/>
   </Capabilities>
 </Package>
