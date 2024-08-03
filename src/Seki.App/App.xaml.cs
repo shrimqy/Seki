@@ -1,57 +1,149 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
+﻿using Seki.App.Extensions;
+using CommunityToolkit.WinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 using Seki.App.Services;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.Storage;
 using System;
+using Seki.App.Data.Models;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Seki.App
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : Application
     {
-        private ClipboardService _clipboardService;
-        private WebSocketService _webSocketService;
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
+        public static bool HandleClosedEvents { get; set; } = true;
+        public static TaskCompletionSource? SplashScreenLoadingTCS { get; private set; }
+
+        public new static App Current
+             => (App)Application.Current;
+
+        private ClipboardService? _clipboardService;
+        private WebSocketService? _webSocketService;
+        private MdnsService? _mdnsService;
         public App()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
-
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            m_window = new MainWindow();
-            m_window.Activate();
+
+            _ = ActivateAsync();
+
+            async Task ActivateAsync()
+            {
+                // Get AppActivationArguments
+                var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+                var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
+
+                // Example of checking saved devices (replace with your logic)
+                var hasSavedDevices = await CheckForSavedDevicesAsync();
+                // Initialize and activate MainWindow
+                MainWindow.Instance.Activate();
+
+                // Wait for the Window to initialize
+                await Task.Delay(10);
+
+                SplashScreenLoadingTCS = new TaskCompletionSource();
+                MainWindow.Instance.ShowSplashScreen();
+
+                await Task.Delay(1000);
+                if (hasSavedDevices != null)
+                {
+                    // Wait for the UI to update
+                    // Complete the splash screen loading task
+                    SplashScreenLoadingTCS.SetResult();
+                    SplashScreenLoadingTCS = null;
+
+
+                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+                }
+
+                // Hook events for the window
+                //MainWindow.Instance.Closed += Window_Closed;
+                //MainWindow.Instance.Activated += Window_Activated;
+
+            }
+           
+
+
+            // Initialize MainWindow here
+            EnsureWindowIsInitialized();
+
+
+            _mdnsService = new MdnsService();
+            _mdnsService.AdvertiseService();
 
             _webSocketService = WebSocketService.Instance;
             _webSocketService.Start();
             _clipboardService = new ClipboardService();
         }
 
-        private Window m_window;
+        private void EnsureWindowIsInitialized()
+        {
+            MainWindow.Instance.Closed += (sender, args) =>
+            {
+                if (HandleClosedEvents)
+                {
+                    args.Handled = true;
+                    MainWindow.Instance.AppWindow.Hide();
+                }
+            };
+            MainWindow.Instance.Activated += Window_Activated;
+            //Window.Closed += Window_Closed;
+        }
+
+        public async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
+        {
+            var activatedEventArgsData = activatedEventArgs.Data;
+            // Called from Program class
+
+            // InitializeApplication accesses UI, needs to be called on UI thread
+            await MainWindow.Instance.DispatcherQueue.EnqueueAsync(()
+                => MainWindow.Instance.InitializeApplicationAsync(activatedEventArgsData));
+        }
+
+        private void Window_Activated(object sender, WindowActivatedEventArgs args)
+        {
+            if (args.WindowActivationState == WindowActivationState.CodeActivated ||
+                args.WindowActivationState == WindowActivationState.PointerActivated)
+                return;
+            ApplicationData.Current.LocalSettings.Values["INSTANCE_ACTIVE"] = -Environment.ProcessId;
+        }
+        private void Window_Closed(object sender, WindowEventArgs args)
+        {
+            // Cache the window instead of closing it
+            MainWindow.Instance.AppWindow.Hide();
+
+            Thread.Yield();
+        }
+
+
+        private static JsonSerializerOptions options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        private static async Task<DeviceInfo?> CheckForSavedDevicesAsync()
+        {
+            try
+            {
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
+                string json = await FileIO.ReadTextAsync(deviceInfoFile);
+                System.Diagnostics.Debug.WriteLine(json);
+                return JsonSerializer.Deserialize<DeviceInfo>(json, options);
+            }
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
+        }
     }
+
 }
