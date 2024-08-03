@@ -17,25 +17,19 @@ using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 using Windows.Storage;
+using Windows.Services.Maps;
 
 
 namespace Seki.App.Services
 {
     public class SekiSession(WsServer server) : WsSession(server)
     {
+
+        public Devices? Device { get; private set; }
+
         public override void OnWsConnected(HttpRequest request)
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} connected!");
-            //var message = new NotificationMessage
-            //{
-            //    Type = SocketMessageType.Notification,
-            //    AppName = "Whatsapp",
-            //    Header = "Jerin",
-            //    Content = "content",
-            //    Actions = { new NotificationAction { ActionId = "0", Label = "Reply" } }
-            //};
-            
-            //SendMessage(message);
             SendMessage(new Response { ResType = "Status", Content = "Connected" });
         }
             
@@ -56,6 +50,7 @@ namespace Seki.App.Services
             }
             catch (JsonException ex)
             {
+                System.Diagnostics.Debug.WriteLine(ex);
                 System.Diagnostics.Debug.WriteLine($"JSON deserialization error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 SendMessage(new Response { Content = "Invalid message format: " + ex.Message });
@@ -87,6 +82,18 @@ namespace Seki.App.Services
                     {
                         // Handle response
                         System.Diagnostics.Debug.WriteLine($"Received response: {responseMessage.ResType}, {responseMessage.Content}");
+                    }
+                    break;
+                case SocketMessageType.DeviceInfo:
+                    if (message is DeviceInfo deviceInfo)
+                    {
+                        // Create and store device information
+                        Device = new Devices
+                        {
+                            Id = deviceInfo.DeviceId,
+                            Name = deviceInfo.DeviceName,
+                            LastConnected = DateTime.Now
+                        };
                     }
                     break;
                 default:
@@ -123,13 +130,20 @@ namespace Seki.App.Services
                         System.Diagnostics.Debug.WriteLine($"Received response: {responseMessage.ResType}, {responseMessage.Content}");
                     }
                     break;
-                // Add more cases for other message types
+                case SocketMessageType.DeviceInfo:
+                    if (message is DeviceInfo deviceInfo)
+                    {
+                        // Handle DeviceInfo
+                        System.Diagnostics.Debug.WriteLine($"Received response: {deviceInfo.DeviceName}");
+                    }
+                    break;
                 default:
                     System.Diagnostics.Debug.WriteLine($"Unknown message type: {message.Type}");
                     SendMessage(new Response { Content = "Unknown message type" });
                     break;
             }
         }
+
         private static List<AppNotification> notificationHistory = new List<AppNotification>();
 
         private static Stream Base64ToStream(string base64)
@@ -139,7 +153,7 @@ namespace Seki.App.Services
         }
         private static async void ShowDesktopNotification(NotificationMessage notificationMessage)
         {
-            if (notificationMessage.Title != null)
+            if (notificationMessage.Title != null && notificationMessage.NotificationType == "NEW")
             {
                 string tag = $"{notificationMessage.Tag}";
                 string group = $"{notificationMessage.GroupKey}";
@@ -147,7 +161,7 @@ namespace Seki.App.Services
                     .AddText(notificationMessage.AppName, new AppNotificationTextProperties().SetMaxLines(1))
                     .AddText(notificationMessage.Title)
                     .AddText(notificationMessage.Text)
-                    .SetTag(tag)
+                    //.SetTag(tag)
                     .SetGroup(group);
 
                 // Add large icon
@@ -160,7 +174,6 @@ namespace Seki.App.Services
                         await SaveStreamToFileAsync(randomAccessStream, "largeicon.png");
                     }
                 }
-                // Add app icon
                 else if (!string.IsNullOrEmpty(notificationMessage.AppIcon))
                 {
                     using (var stream = Base64ToStream(notificationMessage.AppIcon))
@@ -227,17 +240,25 @@ namespace Seki.App.Services
 
     public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
+        private Dictionary<string, DeviceInfo> _connectedDevices = new Dictionary<string, DeviceInfo>();
+
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
         protected override void OnError(SocketError error)
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket server caught an error with code {error}");
         }
+
+        protected override void OnConnected(TcpSession session)
+        {
+            base.OnConnected(session);
+        }
+
     }
 
     public class WebSocketService
     {
-        private static WebSocketService _instance;
+        private static WebSocketService? _instance;
         private SekiServer _webSocketServer;
         private ClipboardService _clipboardService;
         private bool _isRunning;
@@ -275,17 +296,21 @@ namespace Seki.App.Services
 
         public bool IsRunning => _isRunning;
 
-        private void OnClipboardContentChanged(object sender, string content)
+        private void OnClipboardContentChanged(object? sender, string? content)
         {
             // Log detailed information for debugging
             System.Diagnostics.Debug.WriteLine($"Clipboard: {content}");
-            var clipboardMessage = new ClipboardMessage
+            if (content != null)
             {
-                Type = SocketMessageType.Clipboard,
-                Content = content
-            };
-            string jsonMessage = SocketMessageSerializer.Serialize(clipboardMessage);
-            _webSocketServer.MulticastText(jsonMessage);
+                var clipboardMessage = new ClipboardMessage
+                {
+                    Type = SocketMessageType.Clipboard,
+                    Content = content
+                };
+                string jsonMessage = SocketMessageSerializer.Serialize(clipboardMessage);
+                _webSocketServer.MulticastText(jsonMessage);
+            }
+
         }
 
         private static string GetLocalIPAddress()
@@ -301,6 +326,5 @@ namespace Seki.App.Services
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
-        
     }
 }

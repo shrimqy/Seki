@@ -1,6 +1,10 @@
 ﻿using Seki.App.Data.Models;
 using System;
+using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Windows.Storage;
+
 namespace Seki.App.Helpers
 {
     public static class SocketMessageSerializer
@@ -29,20 +33,38 @@ namespace Seki.App.Helpers
                 if (typeElement.ValueKind == JsonValueKind.String)
                 {
                     string typeString = typeElement.GetString();
+                    System.Diagnostics.Debug.WriteLine(typeString);
                     if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
                     {
-                        return messageType switch
+                        switch (messageType)
                         {
-                            SocketMessageType.Notification => JsonSerializer.Deserialize<NotificationMessage>(json, options),
-                            SocketMessageType.Clipboard => JsonSerializer.Deserialize<ClipboardMessage>(json, options),
-                            SocketMessageType.Response => JsonSerializer.Deserialize<Response>(json, options),
+                            case SocketMessageType.Notification:
+                                return JsonSerializer.Deserialize<NotificationMessage>(json, options);
+                            case SocketMessageType.Clipboard:
+                                return JsonSerializer.Deserialize<ClipboardMessage>(json, options);
+                            case SocketMessageType.Response:
+                                return JsonSerializer.Deserialize<Response>(json, options);
+                            case SocketMessageType.DeviceInfo:
+                                SaveDeviceInfoAsync(json);
+                                return JsonSerializer.Deserialize<DeviceInfo>(json, options);
+                            case SocketMessageType.DeviceStatus:
+                                return JsonSerializer.Deserialize<DeviceStatus>(json, options);
                             // Add more cases for other message types
-                            _ => JsonSerializer.Deserialize<SocketMessage>(json, options) // Return base message if type is unknown
-                        };
+                            default:
+                                return JsonSerializer.Deserialize<SocketMessage>(json, options);
+                        }
                     }
                 }
+            }
+
+            static async Task SaveDeviceInfoAsync(string json)
+            {
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                StorageFile deviceInfoFile = await localFolder.CreateFileAsync("deviceInfo.json", CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(deviceInfoFile, json);
             }
             throw new JsonException("Invalid or missing 'type' property in the JSON message.");
         }
     }
 }
+
