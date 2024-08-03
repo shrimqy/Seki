@@ -30,13 +30,9 @@ namespace Seki.App.Data.Models
         [EnumMember(Value = "2")]
         Notification,
         [EnumMember(Value = "3")]
-        Permission,
+        DeviceInfo,
         [EnumMember(Value = "4")]
-        Media,
-        [EnumMember(Value = "5")]
-        Link,
-        [EnumMember(Value = "6")]
-        Message
+        DeviceStatus
     }
 
     public class SocketMessage
@@ -57,14 +53,6 @@ namespace Seki.App.Data.Models
         }
     }
 
-    public class Link : SocketMessage
-    {
-        public string Url { get; set; }
-        public Link()
-        {
-            Type = SocketMessageType.Link;
-        }
-    }
 
     public class ClipboardMessage : SocketMessage
     {
@@ -79,6 +67,9 @@ namespace Seki.App.Data.Models
 
     public class NotificationMessage : SocketMessage
     {
+        [JsonPropertyName("notificationType")]
+        public string NotificationType { get; set; }
+
         [JsonPropertyName("appName")]
         public string AppName { get; set; }
 
@@ -94,6 +85,8 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("groupKey")]
         public string GroupKey { get; set; }
 
+        public List<NotificationAction> Actions { get; set; } = new List<NotificationAction>();
+
         [JsonPropertyName("appIcon")]
         public string AppIcon { get; set; }
 
@@ -102,8 +95,6 @@ namespace Seki.App.Data.Models
 
         [JsonPropertyName("largeIcon")]
         public string LargeIcon { get; set; }
-
-        public List<NotificationAction> Actions { get; set; } = new List<NotificationAction>();
     }
 
     public class NotificationAction
@@ -112,31 +103,26 @@ namespace Seki.App.Data.Models
         public string ActionId { get; set; }
     }
 
-    public class RequestAccessMessage : SocketMessage
+    public class DeviceInfo : SocketMessage
     {
-        public string Feature { get; set; }
+        [JsonPropertyName("id")]
+        public string DeviceId { get; set; }
+
+        [JsonPropertyName("deviceName")]
+        public string DeviceName { get; set; }
+
     }
 
-    public class Message : SocketMessage
+    public class DeviceStatus : SocketMessage
     {
-        public string Sender { get; set; }
-        public string MessageContent { get; set; }
-        public bool ReadStatus { get; set; }
+        [JsonPropertyName("batteryStatus")]
+        public int BatteryStatus { get; set; }
 
-        public Message()
-        {
-            Type = SocketMessageType.Message;
-        }
-    }
+        [JsonPropertyName("wifiStatus")]
+        public Boolean WifiStatus { get; set; }
 
-    public class Media : SocketMessage
-    {
-        public string ControlAction { get; set; }
-        public string MediaInfo { get; set; }
+        [JsonPropertyName("bluetoothStatus")]
+        public Boolean BluetoothStatus { get; set; }
 
-        public Media()
-        {
-            Type = SocketMessageType.Media;
-        }
     }
 }
