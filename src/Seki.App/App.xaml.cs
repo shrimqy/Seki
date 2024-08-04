@@ -11,6 +11,8 @@ using Seki.App.Data.Models;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.IO;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Seki.App.Helpers;
 
 namespace Seki.App
 {
@@ -50,6 +52,10 @@ namespace Seki.App
 
                 SplashScreenLoadingTCS = new TaskCompletionSource();
                 MainWindow.Instance.ShowSplashScreen();
+
+                // Configure the DI (dependency injection) container
+                var host = AppLifeCycleHelper.ConfigureHost();
+                Ioc.Default.ConfigureServices(host.Services);
 
                 await Task.Delay(1000);
                 if (hasSavedDevices != null)
@@ -136,7 +142,6 @@ namespace Seki.App
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
                 StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
                 string json = await FileIO.ReadTextAsync(deviceInfoFile);
-                System.Diagnostics.Debug.WriteLine(json);
                 return JsonSerializer.Deserialize<DeviceInfo>(json, options);
             }
             catch (FileNotFoundException)
