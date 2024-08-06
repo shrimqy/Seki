@@ -71,14 +71,14 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock FontWeight="SemiBold" Text="Device Name:" />
                             <TextBlock Margin="0,0,0,10" Text="{x:Bind ViewModel.DeviceInfo.DeviceName, Mode=OneWay}" />
-
-                            <TextBlock FontWeight="SemiBold" Text="Last Connected:" />
-                            <TextBlock Margin="0,0,0,10" Text="{x:Bind ViewModel.DeviceInfo.Type, Mode=OneWay}" />
                         </StackPanel>
-
                     </Grid>
+                    <!--  Device Status Section  -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <TextBlock Margin="0,0,10,0" Text="Battery Status:" />
+                        <TextBlock Margin="10,0,0,0" Text="{x:Bind ViewModel.DeviceStatus.BatteryStatus, Mode=OneWay}" />
+                    </StackPanel>
                 </Grid>
 
             </Grid>

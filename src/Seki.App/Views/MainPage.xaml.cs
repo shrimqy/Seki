@@ -24,7 +24,4 @@ namespace Seki.App.Views
             ViewModel = Ioc.Default.GetRequiredService<MainPageViewModel>();
         }
     }
-    
-
-
 }
