@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Seki.App.Data.Models;
+using Seki.App.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,10 @@ namespace Seki.App.ViewModels
 {
     public sealed class MainPageViewModel : ObservableObject
     {
+        private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcher;
+
         private DeviceInfo _deviceInfo;
+        private DeviceStatus _deviceStatus;
 
         public DeviceInfo DeviceInfo
         {
@@ -20,9 +24,40 @@ namespace Seki.App.ViewModels
             set => SetProperty(ref _deviceInfo, value);
         }
 
+        public DeviceStatus DeviceStatus
+        {
+            get => _deviceStatus;
+            set => SetProperty(ref _deviceStatus, value);
+        }
+
         public MainPageViewModel()
         {
-            LoadDeviceInfoAsync();
+            // To Access the UI thread later.
+            _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            WebSocketService.Instance.DeviceStatusReceived += OnDeviceStatusReceived;
+            Task task = LoadDeviceInfoAsync();
+
+        }
+
+        private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
+        {
+            _dispatcher.TryEnqueue(() =>
+            {
+                DeviceStatus = deviceStatus;
+            });
+        }
+
+        private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        {
+            _dispatcher.TryEnqueue(() =>
+            {
+                DeviceInfo = deviceInfo;
+            });
+        }
+
+        public void Cleanup()
+        {
+            WebSocketService.Instance.DeviceStatusReceived -= OnDeviceStatusReceived;
         }
 
         private async Task LoadDeviceInfoAsync()

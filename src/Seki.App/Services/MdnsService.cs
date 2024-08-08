@@ -7,7 +7,8 @@ namespace Seki.App.Services
     {
         public void AdvertiseService()
         {
-            var service = new ServiceProfile("Shrimpy", "_foo._tcp", 1024);
+            string computerName = Environment.MachineName;
+            var service = new ServiceProfile(computerName, "_foo._tcp", 1024);
             var sd = new ServiceDiscovery();
             sd.Advertise(service);
             Console.WriteLine("Service advertised.");

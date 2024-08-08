@@ -22,10 +22,31 @@ using Windows.Services.Maps;
 
 namespace Seki.App.Services
 {
-    public class SekiSession(WsServer server) : WsSession(server)
+    public class SekiSession : WsSession
     {
+        private readonly SekiServer _server;
+
+        public SekiSession(SekiServer server) : base(server)
+        {
+            _server = server;
+        }
+
+        public event Action<DeviceStatus>? OnDeviceStatusReceived;
+        public event Action<DeviceInfo>? OnDeviceInfoReceived;
 
         public Devices? Device { get; private set; }
+
+        private DeviceInfo? _deviceInfo;
+
+        public DeviceInfo? DeviceInfo
+        {
+            get { return _deviceInfo; }
+            private set
+            {
+                _deviceInfo = value;
+                _server.OnDeviceInfoReceived(value);
+            }
+        }
 
         public override void OnWsConnected(HttpRequest request)
         {
@@ -54,51 +75,6 @@ namespace Seki.App.Services
                 System.Diagnostics.Debug.WriteLine($"JSON deserialization error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 SendMessage(new Response { Content = "Invalid message format: " + ex.Message });
-            }
-        }
-
-        public void HandleMessage(SocketMessage message)
-        {
-            switch (message.Type)
-            {
-                case SocketMessageType.Clipboard:
-                    if (message is ClipboardMessage clipboardMessage)
-                    {
-                        var clipboardData = new DataPackage();
-                        clipboardData.SetText(clipboardMessage.Content);
-                        Clipboard.SetContent(clipboardData);
-                    }
-                    break;
-                case SocketMessageType.Notification:
-                    if (message is NotificationMessage notificationMessage)
-                    {
-                        // Handle notification
-                        //System.Diagnostics.Debug.WriteLine($"Received notification: {notificationMessage.AppName}, {notificationMessage.Content}");
-                        // You can add more specific handling for the notification here
-                    }
-                    break;
-                case SocketMessageType.Response:
-                    if (message is Response responseMessage)
-                    {
-                        // Handle response
-                        System.Diagnostics.Debug.WriteLine($"Received response: {responseMessage.ResType}, {responseMessage.Content}");
-                    }
-                    break;
-                case SocketMessageType.DeviceInfo:
-                    if (message is DeviceInfo deviceInfo)
-                    {
-                        // Create and store device information
-                        Device = new Devices
-                        {
-                            Id = deviceInfo.DeviceId,
-                            Name = deviceInfo.DeviceName,
-                            LastConnected = DateTime.Now
-                        };
-                    }
-                    break;
-                default:
-                    SendMessage(new Response { Content = "Unknown message type" });
-                    break;
             }
         }
 
@@ -135,6 +111,15 @@ namespace Seki.App.Services
                     {
                         // Handle DeviceInfo
                         System.Diagnostics.Debug.WriteLine($"Received response: {deviceInfo.DeviceName}");
+                    }
+                    break;
+                case SocketMessageType.DeviceStatus:
+                    if (message is DeviceStatus deviceStatus)
+                    {
+                        // Handle DeviceInfo
+                        System.Diagnostics.Debug.WriteLine($"Received response: {deviceStatus.BatteryStatus}");
+                        _server.OnDeviceStatusReceived(deviceStatus);
+                        
                     }
                     break;
                 default:
@@ -240,8 +225,9 @@ namespace Seki.App.Services
 
     public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
-        private Dictionary<string, DeviceInfo> _connectedDevices = new Dictionary<string, DeviceInfo>();
 
+        public event Action<DeviceStatus> DeviceStatusReceived;
+        public event Action<DeviceInfo?> DeviceInfoReceived;
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
         protected override void OnError(SocketError error)
@@ -249,9 +235,20 @@ namespace Seki.App.Services
             System.Diagnostics.Debug.WriteLine($"WebSocket server caught an error with code {error}");
         }
 
+
         protected override void OnConnected(TcpSession session)
         {
             base.OnConnected(session);
+        }
+
+        public void OnDeviceStatusReceived(DeviceStatus deviceStatus)
+        {
+            DeviceStatusReceived?.Invoke(deviceStatus);
+        }
+
+        public void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        {
+            DeviceInfoReceived?.Invoke(deviceInfo);
         }
 
     }
@@ -263,16 +260,36 @@ namespace Seki.App.Services
         private ClipboardService _clipboardService;
         private bool _isRunning;
 
+
+        public event Action<DeviceStatus> DeviceStatusReceived;
+        public event Action<DeviceInfo?> DeviceInfoReceived;
+
+
         // Private constructor for singleton pattern
         private WebSocketService()
         {
             string ipAddress = GetLocalIPAddress();
             _webSocketServer = new SekiServer(IPAddress.Parse(ipAddress), 5149);
+            _webSocketServer.DeviceStatusReceived += OnDeviceStatusReceived;
             _clipboardService = new ClipboardService();
             _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
+           
+
+
         }
+
         // Singleton instance
         public static WebSocketService Instance => _instance ??= new WebSocketService();
+
+        private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
+        {
+            DeviceStatusReceived?.Invoke(deviceStatus);
+        }
+
+        public void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        {
+            DeviceInfoReceived?.Invoke(deviceInfo);
+        }
 
         public void Start()
         {
@@ -295,6 +312,8 @@ namespace Seki.App.Services
         }
 
         public bool IsRunning => _isRunning;
+
+
 
         private void OnClipboardContentChanged(object? sender, string? content)
         {
