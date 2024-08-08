@@ -18,11 +18,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Stretch="None">
-            <!--<Image
-			    x:Name="SplashScreenImage"
-			    ImageFailed="Image_ImageFailed"
-			    ImageOpened="Image_ImageOpened"
-			    Source="\Assets\logo-winui.png" />-->
+            <Image x:Name="SplashScreenImage" Source="Assets/SplashScreen.scale-200.png" />
         </Viewbox>
 
         <!--  Branch Label  -->
@@ -34,7 +30,7 @@
             FontSize="20"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
             LineHeight="32">
-            <Run FontWeight="SemiBold" Text="Files" />
+            <Run FontWeight="SemiBold" Text="Seki" />
             <Run FontWeight="SemiLight" Text="{x:Bind Mode=OneTime}" />
         </TextBlock>
 

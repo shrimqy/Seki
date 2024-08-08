@@ -18,8 +18,10 @@ namespace Seki.App
 {
     public partial class App : Application
     {
+
         public static bool HandleClosedEvents { get; set; } = true;
-        public static TaskCompletionSource? SplashScreenLoadingTCS { get; private set; }
+        public static TaskCompletionSource<bool>? SplashScreenLoadingTCS { get; private set; }
+
 
         public new static App Current
              => (App)Application.Current;
@@ -42,51 +44,45 @@ namespace Seki.App
                 var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
                 var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
 
-                // Example of checking saved devices (replace with your logic)
-                var hasSavedDevices = await CheckForSavedDevicesAsync();
                 // Initialize and activate MainWindow
                 MainWindow.Instance.Activate();
 
-                // Wait for the Window to initialize
+                // Wait for the Window to fully initialize
                 await Task.Delay(10);
 
-                SplashScreenLoadingTCS = new TaskCompletionSource();
+                // Show Splash Screen
+                SplashScreenLoadingTCS = new TaskCompletionSource<bool>();
                 MainWindow.Instance.ShowSplashScreen();
 
-                // Configure the DI (dependency injection) container
+                // Configure the DI container
                 var host = AppLifeCycleHelper.ConfigureHost();
                 Ioc.Default.ConfigureServices(host.Services);
 
-                await Task.Delay(1000);
+                _mdnsService = new MdnsService();
+                _mdnsService.AdvertiseService();
+
+                _webSocketService = WebSocketService.Instance;
+                _webSocketService.Start();
+
+                WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
+                _clipboardService = new ClipboardService();
+
+                var hasSavedDevices = await CheckForSavedDevicesAsync();
                 if (hasSavedDevices != null)
                 {
-                    // Wait for the UI to update
-                    // Complete the splash screen loading task
-                    SplashScreenLoadingTCS.SetResult();
-                    SplashScreenLoadingTCS = null;
-
-
+                    // Initialize the main application after splash screen completes
                     _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
                 }
-
+                System.Diagnostics.Debug.WriteLine("await for task started");
+                await SplashScreenLoadingTCS.Task;
+                if (SplashScreenLoadingTCS.Task.Result)
+                {
+                    System.Diagnostics.Debug.WriteLine("inside if of result");
+                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+                }
                 // Hook events for the window
-                //MainWindow.Instance.Closed += Window_Closed;
-                //MainWindow.Instance.Activated += Window_Activated;
-
+                EnsureWindowIsInitialized();
             }
-           
-
-
-            // Initialize MainWindow here
-            EnsureWindowIsInitialized();
-
-
-            _mdnsService = new MdnsService();
-            _mdnsService.AdvertiseService();
-
-            _webSocketService = WebSocketService.Instance;
-            _webSocketService.Start();
-            _clipboardService = new ClipboardService();
         }
 
         private void EnsureWindowIsInitialized()
@@ -134,6 +130,13 @@ namespace Seki.App
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+
+        private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        {
+            // Complete the splash screen loading task
+            SplashScreenLoadingTCS?.SetResult(true);
+            System.Diagnostics.Debug.WriteLine("event triggered");
+        }
 
         private static async Task<DeviceInfo?> CheckForSavedDevicesAsync()
         {

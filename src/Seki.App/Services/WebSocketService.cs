@@ -111,6 +111,7 @@ namespace Seki.App.Services
                     {
                         // Handle DeviceInfo
                         System.Diagnostics.Debug.WriteLine($"Received response: {deviceInfo.DeviceName}");
+                        _server.OnDeviceInfoReceived(deviceInfo);
                     }
                     break;
                 case SocketMessageType.DeviceStatus:
@@ -227,7 +228,7 @@ namespace Seki.App.Services
     {
 
         public event Action<DeviceStatus> DeviceStatusReceived;
-        public event Action<DeviceInfo?> DeviceInfoReceived;
+        public event Action<DeviceInfo> DeviceInfoReceived;
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
         protected override void OnError(SocketError error)
@@ -246,7 +247,7 @@ namespace Seki.App.Services
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
-        public void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        public void OnDeviceInfoReceived(DeviceInfo deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
@@ -262,7 +263,7 @@ namespace Seki.App.Services
 
 
         public event Action<DeviceStatus> DeviceStatusReceived;
-        public event Action<DeviceInfo?> DeviceInfoReceived;
+        public event Action<DeviceInfo> DeviceInfoReceived;
 
 
         // Private constructor for singleton pattern
@@ -271,6 +272,7 @@ namespace Seki.App.Services
             string ipAddress = GetLocalIPAddress();
             _webSocketServer = new SekiServer(IPAddress.Parse(ipAddress), 5149);
             _webSocketServer.DeviceStatusReceived += OnDeviceStatusReceived;
+            _webSocketServer.DeviceInfoReceived += OnDeviceInfoReceived;
             _clipboardService = new ClipboardService();
             _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
            
@@ -286,7 +288,7 @@ namespace Seki.App.Services
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
-        public void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        public void OnDeviceInfoReceived(DeviceInfo deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }

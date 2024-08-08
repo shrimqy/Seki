@@ -35,8 +35,8 @@ namespace Seki.App.ViewModels
             // To Access the UI thread later.
             _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
             WebSocketService.Instance.DeviceStatusReceived += OnDeviceStatusReceived;
+            WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
             Task task = LoadDeviceInfoAsync();
-
         }
 
         private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
