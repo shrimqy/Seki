@@ -20,11 +20,11 @@
 
 ### Windows
 
-1. **Download the Seki Installer**: [Seki Installer](#) (Link to the installer or release page).
+1. **Download the Installer**: [Drive](https://drive.google.com/drive/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G?usp=sharing).
 2. **Install the Certificate**:
-   - Manually install the provided certificate (to the personal certification store, Trusted Root Certification Authorities and Trusted People) in order to install the app .
+   - Manually install the provided certificate (Trusted Root Certification Authorities, try other certifications stores as well if it doesn't work) in order to install the app .
 3. **Run the App**:
-   - Launch the Seki app and follow any on-screen instructions to connect with your Android device.
+   - Launch the Seki app, on the loading screen open up the app on android and connect.
 
 ### Android
 
