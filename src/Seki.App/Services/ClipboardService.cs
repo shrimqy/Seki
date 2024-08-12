@@ -6,14 +6,14 @@ namespace Seki.App.Services
 {
     public class ClipboardService
     {
-        public event EventHandler<string> ClipboardContentChanged;
+        public event EventHandler<string>? ClipboardContentChanged;
 
         public ClipboardService()
         {
             Clipboard.ContentChanged += OnClipboardContentChanged;
         }
 
-        private async void OnClipboardContentChanged(object sender, object e)
+        private async void OnClipboardContentChanged(object? sender, object? e)
         {
             var dataPackageView = Clipboard.GetContent();
             if (dataPackageView.Contains(StandardDataFormats.Text))
