@@ -16,6 +16,7 @@
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
 	    <Nullable>enable</Nullable>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
         <EnableMsixTooling>true</EnableMsixTooling>
         <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
         <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
@@ -35,15 +36,16 @@
     <Compile Remove="GlobalUsing.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="Assets\Inactive.ico" />
     <Content Remove="Assets\logo-winui.png" />
-    <Content Remove="Assets\Red.ico" />
     <Content Remove="Assets\winui.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\Inactive.ico" />
+    <None Remove="Assets\Red.ico" />
     <None Remove="Views\MainPage.xaml" />
     <None Remove="Views\Sync\Sync.xaml" />
     <None Remove="Views\SystemTray\SystemTray.xaml" />
+    <None Remove="Views\TrayIconView.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -92,6 +94,25 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="GlobalUsing.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="Assets\Inactive.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Red.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Sekia.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\SmallTile.scale-100.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\TrayIconView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\MainPage.xaml">

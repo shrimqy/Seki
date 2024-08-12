@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
-    x:Class="Seki.App.Views.SystemTray.SystemTray"
+    x:Class="Seki.App.Views.TrayIconView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:Seki.App.Helpers"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Seki.App.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:tb="using:H.NotifyIcon"
     mc:Ignorable="d">
@@ -11,8 +13,8 @@
     <UserControl.Resources>
         <converters:BoolToImageSourceConverter
             x:Key="BoolToImageSourceConverter"
-            FalseImage="ms-appx:///Assets/Inactive.ico"
-            TrueImage="ms-appx:///Assets/Red.ico" />
+            FalseImage="ms-appx:///Assets/Sekia.ico"
+            TrueImage="ms-appx:///Assets/Sekia.ico" />
     </UserControl.Resources>
     <tb:TaskbarIcon
         x:Name="TrayIcon"
@@ -21,8 +23,7 @@
         IconSource="{x:Bind IsWindowVisible, Converter={StaticResource BoolToImageSourceConverter}}"
         LeftClickCommand="{x:Bind ShowHideWindowCommand}"
         NoLeftClickDelay="True"
-        ToolTipText="Seki">
-
+        ToolTipText="Sekia">
         <tb:TaskbarIcon.ContextFlyout>
             <MenuFlyout AreOpenCloseAnimationsEnabled="False">
                 <MenuFlyoutItem Command="{x:Bind ShowHideWindowCommand}" Text="Show/Hide Window" />

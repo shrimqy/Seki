@@ -1,20 +1,17 @@
-using H.NotifyIcon;
-using Microsoft.UI.Xaml.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml.Controls;
 
 
-namespace Seki.App.Views.SystemTray
+namespace Seki.App.Views
 {
     [ObservableObject]
-    public sealed partial class SystemTray : UserControl
+    public sealed partial class TrayIconView : UserControl
     {
-
         [ObservableProperty]
         private bool _isWindowVisible;
 
-
-        public SystemTray()
+        public TrayIconView()
         {
             InitializeComponent();
         }
@@ -30,11 +27,11 @@ namespace Seki.App.Views.SystemTray
 
             if (window.Visible)
             {
-                window.Hide();
+                window.AppWindow.Hide();
             }
             else
             {
-                window.Show();
+                window.AppWindow.Show();
             }
             IsWindowVisible = window.Visible;
         }
@@ -47,5 +44,4 @@ namespace Seki.App.Views.SystemTray
             MainWindow.Instance?.Close();
         }
     }
-
 }

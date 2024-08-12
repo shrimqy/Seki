@@ -10,6 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:viewmodels="using:Seki.App.ViewModels"
+    xmlns:views="using:Seki.App.Views"
     xmlns:wctconverters="using:CommunityToolkit.WinUI.UI.Converters"
     AllowDrop="True"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
@@ -83,5 +84,6 @@
 
             </Grid>
         </Grid>
+        <views:TrayIconView x:Name="TrayIcon" />
     </Grid>
 </Page>

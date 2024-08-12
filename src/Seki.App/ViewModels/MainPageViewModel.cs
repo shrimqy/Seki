@@ -62,12 +62,21 @@ namespace Seki.App.ViewModels
 
         private async Task LoadDeviceInfoAsync()
         {
+
+            System.Diagnostics.Debug.WriteLine("LoadDeviceFrom ViewModel");
             var localFolder = ApplicationData.Current.LocalFolder;
             var deviceInfoFile = await localFolder.TryGetItemAsync("deviceInfo.json") as StorageFile;
+
             if (deviceInfoFile != null)
             {
+                System.Diagnostics.Debug.WriteLine("File Found from viewModel");
                 string json = await FileIO.ReadTextAsync(deviceInfoFile);
                 DeviceInfo = JsonSerializer.Deserialize<DeviceInfo>(json);
+            }
+            else
+            {
+                // Handle the scenario where the file doesn't exist
+                DeviceInfo = new DeviceInfo(); // Or some other default value
             }
         }
     }
