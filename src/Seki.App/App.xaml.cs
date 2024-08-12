@@ -65,7 +65,9 @@ namespace Seki.App
                 _webSocketService.Start();
 
                 WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
+
                 _clipboardService = new ClipboardService();
+                _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
 
                 var hasSavedDevices = await CheckForSavedDevicesAsync();
                 if (hasSavedDevices != null)
@@ -136,6 +138,22 @@ namespace Seki.App
             // Complete the splash screen loading task
             SplashScreenLoadingTCS?.SetResult(true);
             System.Diagnostics.Debug.WriteLine("event triggered");
+        }
+
+        private void OnClipboardContentChanged(object? sender, string? content)
+        {
+            System.Diagnostics.Debug.WriteLine("Clipboard triggered");
+            if (content != null && _webSocketService != null)
+            {
+                var clipboardMessage = new ClipboardMessage
+                {
+                    Type = SocketMessageType.Clipboard,
+                    Content = content
+                };
+                System.Diagnostics.Debug.WriteLine("clipboard: " + clipboardMessage.Content);
+                string jsonMessage = SocketMessageSerializer.Serialize(clipboardMessage);
+                _webSocketService.SendMessage(jsonMessage);
+            }
         }
 
         private static async Task<DeviceInfo?> CheckForSavedDevicesAsync()

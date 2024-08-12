@@ -90,7 +90,6 @@
     <Folder Include="Interfaces\" />
     <Folder Include="UserControls\" />
     <Folder Include="Strings\" />
-    <Folder Include="Utils\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GlobalUsing.cs" />
