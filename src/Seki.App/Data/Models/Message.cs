@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml.Media.Imaging;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -95,6 +96,12 @@ namespace Seki.App.Data.Models
 
         [JsonPropertyName("largeIcon")]
         public string LargeIcon { get; set; }
+
+        [JsonIgnore]
+        public string IconBase64 { get; set; }
+
+        [JsonIgnore]
+        public BitmapImage Icon { get; set; }
     }
 
     public class NotificationAction
@@ -117,6 +124,9 @@ namespace Seki.App.Data.Models
     {
         [JsonPropertyName("batteryStatus")]
         public int BatteryStatus { get; set; }
+
+        [JsonPropertyName("chargingStatus")]
+        public Boolean ChargingStatus { get; set; }
 
         [JsonPropertyName("wifiStatus")]
         public Boolean WifiStatus { get; set; }

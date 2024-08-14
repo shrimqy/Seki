@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 using Windows.Storage;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Seki.App.Services
 {
@@ -21,49 +23,62 @@ namespace Seki.App.Services
 
         public static async void ShowDesktopNotification(NotificationMessage notificationMessage)
         {
-            if (notificationMessage.Title != null && notificationMessage.NotificationType == "NEW")
+            if (notificationMessage.Title != null && notificationMessage.AppName != notificationMessage.Title)
             {
-                string tag = $"{notificationMessage.Tag}";
-                string group = $"{notificationMessage.GroupKey}";
-                var builder = new AppNotificationBuilder()
-                    .AddText(notificationMessage.AppName, new AppNotificationTextProperties().SetMaxLines(1))
-                    .AddText(notificationMessage.Title)
-                    .AddText(notificationMessage.Text)
-                    //.SetTag(tag)
-                    .SetGroup(group);
+                _notificationHistory.Add(notificationMessage);
+                NotificationReceived?.Invoke(null, notificationMessage);
+                
 
                 // Add large icon
+                // Handle icon for Windows notification
                 if (!string.IsNullOrEmpty(notificationMessage.LargeIcon))
                 {
-                    using (var stream = Base64ToStream(notificationMessage.LargeIcon))
-                    {
-                        await SetNotificationIcon(builder, notificationMessage.LargeIcon, "largeicon.png");
-                    }
+                    notificationMessage.IconBase64 = notificationMessage.LargeIcon;
                 }
                 else if (!string.IsNullOrEmpty(notificationMessage.AppIcon))
                 {
-                    await SetNotificationIcon(builder, notificationMessage.AppIcon, "appicon.png");
+                    notificationMessage.IconBase64 = notificationMessage.AppIcon;
                 }
 
-                // Add big picture
-                //if (!string.IsNullOrEmpty(notificationMessage.BigPicture))
-                //{
-                //    using (var stream = Base64ToStream(notificationMessage.BigPicture))
-                //    {
-                //        var randomAccessStream = await ConvertToRandomAccessStreamAsync(stream);
-                //        builder.AddImage(new Uri("ms-appdata:///local/bigpicture.png"));
-                //        await SaveStreamToFileAsync(randomAccessStream, "bigpicture.png");
-                //    }
-                //}
+                if (notificationMessage.NotificationType == "NEW")
+                {
+                    string tag = $"{notificationMessage.Tag}";
+                    string group = $"{notificationMessage.GroupKey}";
+                    var builder = new AppNotificationBuilder()
+                        .AddText(notificationMessage.AppName, new AppNotificationTextProperties().SetMaxLines(1))
+                        .AddText(notificationMessage.Title)
+                        .AddText(notificationMessage.Text)
+                        //.SetTag(tag)
+                        .SetGroup(group);
 
-                var appNotification = builder.BuildNotification();
-                appNotification.ExpiresOnReboot = true;
-                AppNotificationManager.Default.Show(appNotification);
+                    // Add large icon
+                    // Handle icon for Windows notification
+                    if (!string.IsNullOrEmpty(notificationMessage.LargeIcon))
+                    {
+                        await SetNotificationIcon(builder, notificationMessage.LargeIcon, "largeicon.png");
+                    }
+                    else if (!string.IsNullOrEmpty(notificationMessage.AppIcon))
+                    {
+                        await SetNotificationIcon(builder, notificationMessage.AppIcon, "appicon.png");
+                    }
 
-                _notificationHistory.Add(notificationMessage);
-                NotificationReceived?.Invoke(null, notificationMessage);
+                    // Add big picture
+                    //if (!string.IsNullOrEmpty(notificationMessage.BigPicture))
+                    //{
+                    //    using (var stream = Base64ToStream(notificationMessage.BigPicture))
+                    //    {
+                    //        var randomAccessStream = await ConvertToRandomAccessStreamAsync(stream);
+                    //        builder.AddImage(new Uri("ms-appdata:///local/bigpicture.png"));
+                    //        await SaveStreamToFileAsync(randomAccessStream, "bigpicture.png");
+                    //    }
+                    //}
+
+                    var appNotification = builder.BuildNotification();
+                    appNotification.ExpiresOnReboot = true;
+                    AppNotificationManager.Default.Show(appNotification);
+                }
             }
-            System.Diagnostics.Debug.WriteLine($"Showed or updated notification: {notificationMessage}");
+            System.Diagnostics.Debug.WriteLine($"Showed or updated notification: {notificationMessage.Title}");
         }
 
         private static async Task SetNotificationIcon(AppNotificationBuilder builder, string iconBase64, string fileName)
@@ -77,7 +92,7 @@ namespace Seki.App.Services
         }
 
 
-        private static Stream Base64ToStream(string base64)
+        public static Stream Base64ToStream(string base64)
         {
             byte[] bytes = Convert.FromBase64String(base64);
             return new MemoryStream(bytes);
@@ -102,5 +117,19 @@ namespace Seki.App.Services
                 await fileStream.FlushAsync();
             }
         }
+        public static async Task<BitmapImage> Base64ToBitmapImage(string base64String)
+        {
+            byte[] bytes = Convert.FromBase64String(base64String);
+            using (InMemoryRandomAccessStream stream = new())
+            {
+                await stream.WriteAsync(bytes.AsBuffer());
+                stream.Seek(0);
+
+                BitmapImage image = new();
+                await image.SetSourceAsync(stream);
+                return image;
+            }
+        }
+
     }
 }

@@ -1,14 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Seki.App.Data.Models;
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace Seki.App.ViewModels
 {
@@ -61,14 +64,28 @@ namespace Seki.App.ViewModels
 
         private void OnNotificationReceived(object? sender, NotificationMessage notification)
         {
-            _dispatcher.TryEnqueue(() =>
+            _dispatcher.TryEnqueue(async () =>
             {
+                if (notification.Icon == null && !string.IsNullOrEmpty(notification.IconBase64))
+                {
+                    notification.Icon = await Base64ToBitmapImage(notification.IconBase64);
+                }
                 RecentNotifications.Insert(0, notification);
-                //if (RecentNotifications.Count > 5) // Keep only the 5 most recent notifications
-                //{
-                //    RecentNotifications.RemoveAt(RecentNotifications.Count - 1);
-                //}
             });
+        }
+
+        private async Task<BitmapImage> Base64ToBitmapImage(string base64String)
+        {
+            byte[] bytes = Convert.FromBase64String(base64String);
+            using (InMemoryRandomAccessStream stream = new())
+            {
+                await stream.WriteAsync(bytes.AsBuffer());
+                stream.Seek(0);
+
+                BitmapImage image = new();
+                await image.SetSourceAsync(stream);
+                return image;
+            }
         }
 
         public void Cleanup()

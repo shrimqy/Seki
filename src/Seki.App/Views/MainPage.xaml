@@ -84,11 +84,22 @@
                                 Background="{ThemeResource SystemAltLowColor}"
                                 BorderThickness="1"
                                 CornerRadius="8">
-                                <StackPanel Spacing="5">
-                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind AppName}" />
-                                    <TextBlock Text="{x:Bind Title}" />
-                                    <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap" />
-                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Image
+                                        Width="48"
+                                        Height="48"
+                                        Margin="0,0,10,0"
+                                        Source="{x:Bind Icon, Mode=OneWay}" />
+                                    <StackPanel Grid.Column="1" Spacing="5">
+                                        <TextBlock FontWeight="SemiBold" Text="{x:Bind AppName}" />
+                                        <TextBlock Text="{x:Bind Title}" />
+                                        <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
