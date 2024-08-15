@@ -135,9 +135,12 @@ namespace Seki.App
 
         private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
         {
-            // Complete the splash screen loading task
-            SplashScreenLoadingTCS?.SetResult(true);
-            System.Diagnostics.Debug.WriteLine("event triggered");
+            if (SplashScreenLoadingTCS?.Task.IsCompleted == false || SplashScreenLoadingTCS?.Task == null)
+            {
+                // Complete the splash screen loading task
+                SplashScreenLoadingTCS?.SetResult(true);
+                System.Diagnostics.Debug.WriteLine("event triggered");
+            }
         }
 
         private void OnClipboardContentChanged(object? sender, string? content)
