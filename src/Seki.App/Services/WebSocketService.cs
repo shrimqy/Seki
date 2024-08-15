@@ -21,6 +21,8 @@ namespace Seki.App.Services
 
         public event Action<DeviceStatus>? DeviceStatusReceived;
         public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<bool>? ConnectionStatusChange;
+
 
         private WebSocketService()
         {
@@ -28,7 +30,7 @@ namespace Seki.App.Services
             _webSocketServer = new SekiServer(IPAddress.Parse(ipAddress), 5149);
             _webSocketServer.DeviceStatusReceived += OnDeviceStatusReceived;
             _webSocketServer.DeviceInfoReceived += OnDeviceInfoReceived;
-
+            _webSocketServer.ConnectionStatusChange += OnConnectionStatusChange;
         }
 
         public static WebSocketService Instance => _instance ??= new WebSocketService();
@@ -40,6 +42,7 @@ namespace Seki.App.Services
                 _webSocketServer.Start();
                 _isRunning = true;
                 System.Diagnostics.Debug.WriteLine($"WebSocket server started at ws://{_webSocketServer.Address}:{_webSocketServer.Port}");
+                OnConnectionStatusChange(true);
             }
         }
 
@@ -72,18 +75,33 @@ namespace Seki.App.Services
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
+
+
+        private void OnConnectionStatusChange(bool connectionStatus)
+        {
+            _isRunning = connectionStatus;
+            ConnectionStatusChange?.Invoke(connectionStatus);
+        }
     }
 
     public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
         public event Action<DeviceStatus>? DeviceStatusReceived;
         public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<bool>? ConnectionStatusChange;
 
         protected override TcpSession CreateSession() { return new SekiSession(this); }
 
-        protected override void OnError(SocketError error)
+        protected override void OnStarted()
         {
-            System.Diagnostics.Debug.WriteLine($"WebSocket server caught an error with code {error}");
+            base.OnStarted();
+            OnConnectionStatusChange(true);
+        }
+
+        protected override void OnStopped()
+        {
+            base.OnStopped();
+            OnConnectionStatusChange(false);
         }
 
         public void OnDeviceStatusReceived(DeviceStatus deviceStatus)
@@ -95,19 +113,29 @@ namespace Seki.App.Services
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
+
+        public void OnConnectionStatusChange(bool connectionStatus)
+        {
+            ConnectionStatusChange?.Invoke(connectionStatus);
+        }
+
     }
 
     public class SekiSession(SekiServer server) : WsSession(server)
     {
+        private readonly SekiServer _server = server;
+
         public override void OnWsConnected(HttpRequest request)
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} connected!");
             SendMessage(new Response { ResType = "Status", Content = "Connected" });
+            _server.OnConnectionStatusChange(true);
         }
 
         public override void OnWsDisconnected()
         {
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} disconnected!");
+            _server.OnConnectionStatusChange(false);
         }
 
         public override void OnWsReceived(byte[] buffer, long offset, long size)

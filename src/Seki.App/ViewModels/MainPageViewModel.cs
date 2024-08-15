@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Seki.App.Data.Models;
 using Seki.App.Services;
@@ -10,6 +11,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -20,6 +22,7 @@ namespace Seki.App.ViewModels
         private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcher;
         private DeviceInfo _deviceInfo = new();
         private DeviceStatus _deviceStatus = new();
+        private bool _connectionStatus = false;
         private ObservableCollection<NotificationMessage> _recentNotifications = [];
 
         public DeviceInfo DeviceInfo
@@ -34,6 +37,22 @@ namespace Seki.App.ViewModels
             set => SetProperty(ref _deviceStatus, value);
         }
 
+        public bool ConnectionStatus
+        {
+            get => _connectionStatus;
+            set
+            {
+                if (SetProperty(ref _connectionStatus, value))
+                {
+                    OnPropertyChanged(nameof(ConnectionButtonText));
+                }
+            }
+        }
+
+        public string ConnectionButtonText => ConnectionStatus ? "Connected" : "Disconnected";
+
+        public ICommand ToggleConnectionCommand { get; }
+
         public ObservableCollection<NotificationMessage> RecentNotifications
         {
             get => _recentNotifications;
@@ -43,14 +62,32 @@ namespace Seki.App.ViewModels
         public MainPageViewModel()
         {
             _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            WebSocketService.Instance.ConnectionStatusChange += OnConnectionStatusChange;
             WebSocketService.Instance.DeviceStatusReceived += OnDeviceStatusReceived;
             WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
             NotificationService.NotificationReceived += OnNotificationReceived;
             _ = LoadDeviceInfoAsync();
+
+            ToggleConnectionCommand = new RelayCommand(ToggleConnection);
+        }
+
+
+        private void ToggleConnection()
+        {
+            if (ConnectionStatus)
+            {
+                WebSocketService.Instance.Stop();
+            }
+            else
+            {
+                WebSocketService.Instance.Start();
+            }
         }
 
         private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
         {
+
+            
             _dispatcher.TryEnqueue(() => DeviceStatus = deviceStatus);
         }
 
@@ -60,6 +97,12 @@ namespace Seki.App.ViewModels
             {
                 _dispatcher.TryEnqueue(() => DeviceInfo = deviceInfo);
             }
+        }
+
+        private void OnConnectionStatusChange(bool connectionStatus)
+        {
+            System.Diagnostics.Debug.WriteLine($"connection status changed");
+            _dispatcher.TryEnqueue(() => ConnectionStatus = connectionStatus);
         }
 
         private void OnNotificationReceived(object? sender, NotificationMessage notification)
