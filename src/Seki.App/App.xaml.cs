@@ -28,6 +28,7 @@ namespace Seki.App
 
         private ClipboardService? _clipboardService;
         private WebSocketService? _webSocketService;
+        private PlaybackService? _playbackService;
         private MdnsService? _mdnsService;
         public App()
         {
@@ -64,7 +65,9 @@ namespace Seki.App
                 _webSocketService = WebSocketService.Instance;
                 _webSocketService.Start();
 
-                WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
+                _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
+
+                await InitializePlaybackServiceAsync();
 
                 _clipboardService = new ClipboardService();
                 _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
@@ -101,7 +104,7 @@ namespace Seki.App
             //Window.Closed += Window_Closed;
         }
 
-        public async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
+        public static async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
         {
             var activatedEventArgsData = activatedEventArgs.Data;
             // Called from Program class
@@ -126,12 +129,39 @@ namespace Seki.App
             Thread.Yield();
         }
 
+        private async Task InitializePlaybackServiceAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("Starting PlaybackService initialization");
+            await PlaybackService.Instance.InitializeAsync();
+            PlaybackService.Instance.PlaybackDataChanged += OnPlaybackDataChanged;
+            System.Diagnostics.Debug.WriteLine("PlaybackService initialization completed");
+        }
+
 
         private static JsonSerializerOptions options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+
+        private void OnPlaybackDataChanged(object sender, PlaybackData playbackData)
+        {
+            System.Diagnostics.Debug.WriteLine($"Playback data received: {playbackData.TrackTitle}");
+
+            var playbackMessage = new PlaybackData
+            {
+                Type = SocketMessageType.PlaybackData,
+                AppName = playbackData.AppName,
+                Artist = playbackData.Artist,
+                IsPlaying = playbackData.IsPlaying,
+                Thumbnail = playbackData.Thumbnail,
+                TrackTitle = playbackData.TrackTitle,
+                Volume = playbackData.Volume
+            };
+            string jsonMessage = SocketMessageSerializer.Serialize(playbackMessage);
+            System.Diagnostics.Debug.WriteLine(jsonMessage);
+            _webSocketService?.SendMessage(jsonMessage);
+        }
 
         private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
         {

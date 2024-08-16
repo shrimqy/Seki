@@ -1,4 +1,5 @@
 ﻿using Microsoft.UI.Xaml.Media.Imaging;
+using Seki.App.Services;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -33,7 +34,9 @@ namespace Seki.App.Data.Models
         [EnumMember(Value = "3")]
         DeviceInfo,
         [EnumMember(Value = "4")]
-        DeviceStatus
+        DeviceStatus,
+        [EnumMember(Value = "5")]
+        PlaybackData
     }
 
     public class SocketMessage
@@ -134,5 +137,31 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("bluetoothStatus")]
         public Boolean BluetoothStatus { get; set; }
 
+    }
+
+    public class PlaybackData : SocketMessage
+    {
+        [JsonPropertyName("appName")]
+        public string AppName { get; set; }
+
+        [JsonPropertyName("trackTitle")]
+        public string TrackTitle { get; set; }
+
+        [JsonPropertyName("artist")]
+        public string? Artist { get; set; }
+
+        [JsonPropertyName("thumbnail")]
+        public string? Thumbnail { get; set; }
+
+        [JsonPropertyName("volume")]
+        public double Volume { get; set; }
+
+        [JsonPropertyName("isPlaying")]
+        public bool IsPlaying { get; set; }
+
+        public PlaybackData()
+        {
+            Type = SocketMessageType.PlaybackData;
+        }
     }
 }

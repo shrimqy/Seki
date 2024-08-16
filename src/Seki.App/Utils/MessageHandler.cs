@@ -30,11 +30,19 @@ namespace Seki.App.Utils
                 case SocketMessageType.DeviceStatus:
                     HandleDeviceStatusMessage((DeviceStatus)message, session);
                     break;
+                case SocketMessageType.PlaybackData:
+                    HandlePlaybackDataMessage((PlaybackData)message);
+                    break;
                 default:
                     System.Diagnostics.Debug.WriteLine($"Unknown message type: {message.Type}");
                     session.SendMessage(new Response { Content = "Unknown message type" });
                     break;
             }
+        }
+
+        private static void HandlePlaybackDataMessage(PlaybackData message)
+        {
+            // TODO
         }
 
         private static void HandleClipboardMessage(ClipboardMessage message, SekiSession session)

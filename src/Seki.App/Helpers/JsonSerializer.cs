@@ -49,6 +49,8 @@ namespace Seki.App.Helpers
                                 return JsonSerializer.Deserialize<DeviceInfo>(json, options);
                             case SocketMessageType.DeviceStatus:
                                 return JsonSerializer.Deserialize<DeviceStatus>(json, options);
+                            case SocketMessageType.PlaybackData:
+                                return JsonSerializer.Deserialize<PlaybackData>(json, options);
                             // Add more cases for other message types
                             default:
                                 return JsonSerializer.Deserialize<SocketMessage>(json, options);
