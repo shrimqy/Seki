@@ -39,6 +39,14 @@ namespace Seki.App.Data.Models
         PlaybackData
     }
 
+    public enum MediaAction
+    {
+        RESUME,
+        PAUSE,
+        NEXT_QUEUE,
+        PREV_QUEUE
+    }
+
     public class SocketMessage
     {
         [JsonPropertyName("type")]
@@ -159,9 +167,7 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("isPlaying")]
         public bool IsPlaying { get; set; }
 
-        public PlaybackData()
-        {
-            Type = SocketMessageType.PlaybackData;
-        }
+        [JsonPropertyName("mediaAction")]
+        public string? MediaAction { get; set; }
     }
 }

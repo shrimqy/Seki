@@ -18,90 +18,113 @@ namespace Seki.App.Services
         private static PlaybackService? _instance;
         public static PlaybackService Instance => _instance ??= new PlaybackService();
 
-
-        private GlobalSystemMediaTransportControlsSession? _session;
+        private GlobalSystemMediaTransportControlsSessionManager? _manager;
+        private Dictionary<string, GlobalSystemMediaTransportControlsSession> _activeSessions = new Dictionary<string, GlobalSystemMediaTransportControlsSession>();
 
         public event EventHandler<PlaybackData>? PlaybackDataChanged;
-        public SystemMediaTransportControlsDisplayUpdater? DisplayUpdater { get; }
-        // Property to access the current media player
-        private static MediaPlayer MediaPlayer => BackgroundMediaPlayer.Current;
 
         private PlaybackService() { }
 
         public async Task InitializeAsync()
         {
-            var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-            _session = manager.GetCurrentSession();
+            _manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+            _manager.SessionsChanged += Manager_SessionsChanged;
 
-            if (_session != null)
+            UpdateActiveSessions();
+        }
+
+        private void Manager_SessionsChanged(GlobalSystemMediaTransportControlsSessionManager sender, SessionsChangedEventArgs args)
+        {
+            UpdateActiveSessions();
+        }
+
+        private void UpdateActiveSessions()
+        {
+            if (_manager == null) return;
+
+            var currentSessions = _manager.GetSessions();
+
+            // Remove old sessions
+            foreach (var sessionId in _activeSessions.Keys.ToList())
             {
-                _session.MediaPropertiesChanged += Session_MediaPropertiesChanged;
-                _session.PlaybackInfoChanged += Session_PlaybackInfoChanged;
-                System.Diagnostics.Debug.WriteLine("Session initialized successfully");
+                if (!currentSessions.Any(s => s.SourceAppUserModelId == sessionId))
+                {
+                    var removedSession = _activeSessions[sessionId];
+                    UnsubscribeFromSessionEvents(removedSession);
+                    _activeSessions.Remove(sessionId);
+                    System.Diagnostics.Debug.WriteLine($"Removed session: {sessionId}");
+                }
             }
-            else
+
+            // Add new sessions
+            foreach (var session in currentSessions)
             {
-                System.Diagnostics.Debug.WriteLine("Failed to get current session");
+                if (!_activeSessions.ContainsKey(session.SourceAppUserModelId))
+                {
+                    _activeSessions[session.SourceAppUserModelId] = session;
+                    SubscribeToSessionEvents(session);
+                    System.Diagnostics.Debug.WriteLine($"Added new session: {session.SourceAppUserModelId}");
+                }
             }
         }
 
+        private void SubscribeToSessionEvents(GlobalSystemMediaTransportControlsSession session)
+        {
+            session.MediaPropertiesChanged += Session_MediaPropertiesChanged;
+            session.PlaybackInfoChanged += Session_PlaybackInfoChanged;
+        }
+
+        private void UnsubscribeFromSessionEvents(GlobalSystemMediaTransportControlsSession session)
+        {
+            session.MediaPropertiesChanged -= Session_MediaPropertiesChanged;
+            session.PlaybackInfoChanged -= Session_PlaybackInfoChanged;
+        }
 
         private async void Session_MediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("Media properties changed");
-            await UpdatePlaybackDataAsync();
+            System.Diagnostics.Debug.WriteLine($"Media properties changed for {sender.SourceAppUserModelId}");
+            await UpdatePlaybackDataAsync(sender);
         }
 
         private async void Session_PlaybackInfoChanged(GlobalSystemMediaTransportControlsSession sender, PlaybackInfoChangedEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("Playback info changed");
-            await UpdatePlaybackDataAsync();
+            System.Diagnostics.Debug.WriteLine($"Playback info changed for {sender.SourceAppUserModelId}");
+            await UpdatePlaybackDataAsync(sender);
         }
 
-        private async Task UpdatePlaybackDataAsync()
+        private async Task UpdatePlaybackDataAsync(GlobalSystemMediaTransportControlsSession session)
         {
-            var playbackData = await GetCurrentPlaybackDataAsync();
+            var playbackData = await GetPlaybackDataAsync(session);
             if (playbackData != null)
             {
-                System.Diagnostics.Debug.WriteLine($"Playback data updated: {playbackData.TrackTitle} by {playbackData.Artist}");
+                System.Diagnostics.Debug.WriteLine($"Playback data updated for {session.SourceAppUserModelId}: {playbackData.TrackTitle} by {playbackData.Artist}");
                 PlaybackDataChanged?.Invoke(this, playbackData);
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Failed to get current playback data");
+                System.Diagnostics.Debug.WriteLine($"Failed to get playback data for {session.SourceAppUserModelId}");
             }
         }
 
-        public async Task<PlaybackData?> GetCurrentPlaybackDataAsync()
+        public async Task<PlaybackData?> GetPlaybackDataAsync(GlobalSystemMediaTransportControlsSession session)
         {
-
-            if (_session == null)
-            {
-                return null;
-            }
-
-            var mediaProperties = await _session.TryGetMediaPropertiesAsync();
-            var playbackInfo = _session.GetPlaybackInfo();
+            var mediaProperties = await session.TryGetMediaPropertiesAsync();
+            var playbackInfo = session.GetPlaybackInfo();
 
             var playbackData = new PlaybackData
             {
-                AppName = _session.SourceAppUserModelId,
+                AppName = session.SourceAppUserModelId,
                 TrackTitle = mediaProperties.Title,
                 Artist = mediaProperties.Artist,
                 IsPlaying = playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing,
-                Volume = MediaPlayer?.Volume ?? 0
+                // Note: Volume is not available from the session, you might need to handle this differently
             };
 
-            System.Diagnostics.Debug.WriteLine("appName: " + playbackData.AppName + "track Title: " + playbackData.TrackTitle);
-            // Get thumbnail
             if (mediaProperties.Thumbnail != null)
             {
                 using IRandomAccessStreamWithContentType stream = await mediaProperties.Thumbnail.OpenReadAsync();
-                // Convert stream to byte array or base64 string
                 playbackData.Thumbnail = await ConvertStreamToBase64(stream);
             }
-
-            
 
             return playbackData;
         }
@@ -113,6 +136,40 @@ namespace Seki.App.Services
             await reader.LoadAsync((uint)stream.Size);
             reader.ReadBytes(bytes);
             return Convert.ToBase64String(bytes);
+        }
+
+        public async Task HandleMediaActionAsync(PlaybackData message)
+        {
+            if (!_activeSessions.TryGetValue(message.AppName, out var session))
+            {
+                System.Diagnostics.Debug.WriteLine($"No active media session found for {message.AppName}");
+                return;
+            }
+
+            if (!Enum.TryParse(message.MediaAction, true, out MediaAction action))
+            {
+                System.Diagnostics.Debug.WriteLine($"Unknown action: {message.MediaAction}");
+                return;
+            }
+
+            switch (action)
+            {
+                case MediaAction.RESUME:
+                    await session.TryPlayAsync();
+                    break;
+                case MediaAction.PAUSE:
+                    await session.TryPauseAsync();
+                    break;
+                case MediaAction.NEXT_QUEUE:
+                    await session.TrySkipNextAsync();
+                    break;
+                case MediaAction.PREV_QUEUE:
+                    await session.TrySkipPreviousAsync();
+                    break;
+                default:
+                    System.Diagnostics.Debug.WriteLine($"Unknown action: {action}");
+                    break;
+            }
         }
     }
 }

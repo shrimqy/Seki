@@ -40,9 +40,12 @@ namespace Seki.App.Utils
             }
         }
 
-        private static void HandlePlaybackDataMessage(PlaybackData message)
+        private static async void HandlePlaybackDataMessage(PlaybackData message)
         {
-            // TODO
+            if (message.MediaAction != null)
+            {
+                await PlaybackService.Instance.HandleMediaActionAsync(message);
+            }
         }
 
         private static void HandleClipboardMessage(ClipboardMessage message, SekiSession session)

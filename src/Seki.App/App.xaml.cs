@@ -146,8 +146,6 @@ namespace Seki.App
 
         private void OnPlaybackDataChanged(object sender, PlaybackData playbackData)
         {
-            System.Diagnostics.Debug.WriteLine($"Playback data received: {playbackData.TrackTitle}");
-
             var playbackMessage = new PlaybackData
             {
                 Type = SocketMessageType.PlaybackData,
@@ -159,7 +157,6 @@ namespace Seki.App
                 Volume = playbackData.Volume
             };
             string jsonMessage = SocketMessageSerializer.Serialize(playbackMessage);
-            System.Diagnostics.Debug.WriteLine(jsonMessage);
             _webSocketService?.SendMessage(jsonMessage);
         }
 
