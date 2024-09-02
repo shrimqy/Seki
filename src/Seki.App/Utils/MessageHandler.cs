@@ -33,10 +33,29 @@ namespace Seki.App.Utils
                 case SocketMessageType.PlaybackData:
                     HandlePlaybackDataMessage((PlaybackData)message);
                     break;
+                case SocketMessageType.CommandType:
+                    HandleCommandMessage((Command)message);
+                    break;
+                case SocketMessageType.FileTransferType:
+                    HandleFileTransfer((FileTransfer)message, session);
+                    break;
                 default:
                     System.Diagnostics.Debug.WriteLine($"Unknown message type: {message.Type}");
                     session.SendMessage(new Response { Content = "Unknown message type" });
                     break;
+            }
+        }
+
+        private static async void HandleFileTransfer(FileTransfer message, SekiSession session)
+        {
+            session._fileTransferService.HandleFileTransfer(message);
+        }
+
+        private static async void HandleCommandMessage(Command message)
+        {
+            if (message.CommandType != null)
+            {
+                await CommandService.Instance.HandleCommandMessageAsync(message);
             }
         }
 

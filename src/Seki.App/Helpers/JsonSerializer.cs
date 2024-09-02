@@ -30,7 +30,10 @@ namespace Seki.App.Helpers
             var jsonElement = JsonSerializer.Deserialize<JsonElement>(json, options);
             if (jsonElement.TryGetProperty("type", out var typeElement))
             {
-                if (typeElement.ValueKind == JsonValueKind.String)
+                System.Diagnostics.Debug.WriteLine("serialized FileTransfer");
+                return JsonSerializer.Deserialize<FileTransfer>(json, options)!;
+            }
+            if (jsonElement.TryGetProperty("type", out var typeElement) && typeElement.ValueKind == JsonValueKind.String)
                 {
                     string typeString = typeElement.GetString();
                     System.Diagnostics.Debug.WriteLine(typeString);
@@ -51,7 +54,10 @@ namespace Seki.App.Helpers
                                 return JsonSerializer.Deserialize<DeviceStatus>(json, options);
                             case SocketMessageType.PlaybackData:
                                 return JsonSerializer.Deserialize<PlaybackData>(json, options);
-                            // Add more cases for other message types
+                        case SocketMessageType.CommandType:
+                            return JsonSerializer.Deserialize<Command>(json, options);
+                        case SocketMessageType.FileTransferType:
+                            return JsonSerializer.Deserialize<FileTransfer>(json, options);
                             default:
                                 return JsonSerializer.Deserialize<SocketMessage>(json, options);
                         }

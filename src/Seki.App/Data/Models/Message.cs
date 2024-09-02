@@ -36,7 +36,11 @@ namespace Seki.App.Data.Models
         [EnumMember(Value = "4")]
         DeviceStatus,
         [EnumMember(Value = "5")]
-        PlaybackData
+        PlaybackData,
+        [EnumMember(Value = "6")]
+        CommandType,
+        [EnumMember(Value = "7")]
+        FileTransferType,
     }
 
     public enum MediaAction
@@ -44,7 +48,23 @@ namespace Seki.App.Data.Models
         RESUME,
         PAUSE,
         NEXT_QUEUE,
-        PREV_QUEUE
+        PREV_QUEUE,
+        VOLUME
+    }
+
+    public enum CommandType
+    {
+        LOCK,
+        SHUTDOWN,
+        SLEEP,
+        HIBERNATE,
+    }
+
+    public enum FileTransferType
+    {
+        HTTP,
+        WEBSOCKET,
+        P2P,
     }
 
     public class SocketMessage
@@ -169,5 +189,51 @@ namespace Seki.App.Data.Models
 
         [JsonPropertyName("mediaAction")]
         public string? MediaAction { get; set; }
+
+        [JsonPropertyName("thumbnail")]
+        public string? Thumbnail { get; set; }
+
+        [JsonPropertyName("appIcon")]
+        public string? AppIcon { get; set; }
     }
+
+    public class Command : SocketMessage
+    {
+        [JsonPropertyName("commandType")]
+        public required String CommandType { get; set; }
+    }
+
+
+    public class FileTransfer : SocketMessage
+    {
+        [JsonPropertyName("transferType")]
+        public required String TransferType { get; set; }
+
+        [JsonPropertyName("metadata")]
+        public FileMetadata? Metadata { get; set; }
+
+        [JsonPropertyName("data")]
+        public ByteArrayContent? Data { get; set; }
+
+        public FileTransfer()
+        {
+            Type = SocketMessageType.FileTransferType;
+    }
+    }
+
+    public class FileMetadata
+    {
+        [JsonPropertyName("fileName")]
+        public required String FileName {  get; set; }
+
+        [JsonPropertyName("fileType")]
+        public required String FileType { get; set; }
+
+        [JsonPropertyName("fileSize")]
+        public required long FileSize { get; set; }
+
+        [JsonPropertyName("uri")]
+        public required String Uri { get; set; }
+    }
+
 }

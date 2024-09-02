@@ -124,6 +124,7 @@ namespace Seki.App.Services
     public class SekiSession(SekiServer server) : WsSession(server)
     {
         private readonly SekiServer _server = server;
+        public FileTransferService _fileTransferService = new FileTransferService();
 
         public override void OnWsConnected(HttpRequest request)
         {
@@ -142,7 +143,19 @@ namespace Seki.App.Services
         {
             string jsonMessage = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
             System.Diagnostics.Debug.WriteLine("json message: " + jsonMessage);
+            if (jsonMessage.StartsWith("{"))
+            {
+                HandleJsonMessage(jsonMessage);
+            }
+            else
+            {
+                // This is binary data (file content)
+                HandleBinaryMessage(buffer, offset, size);
+            }
+        }
 
+        private void HandleJsonMessage(string jsonMessage)
+        {
             try
             {
                 SocketMessage message = SocketMessageSerializer.DeserializeMessage(jsonMessage);
@@ -153,6 +166,11 @@ namespace Seki.App.Services
                 System.Diagnostics.Debug.WriteLine($"JSON deserialization error: {ex.Message}");
                 SendMessage(new Response { Content = "Invalid message format: " + ex.Message });
             }
+        }
+
+        private void HandleBinaryMessage(byte[] buffer, long offset, long size)
+        {
+            _fileTransferService.ReceiveFileData(buffer, (int)offset, (int)size);
         }
 
         public void SendMessage(object content)
