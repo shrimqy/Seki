@@ -2,6 +2,7 @@
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -111,6 +112,46 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("text")]
         public string Text { get; set; }
 
+        [JsonPropertyName("messages")]
+        public List<Message> Messages { get; set; }
+
+        [JsonIgnore]
+        public List<GroupedMessage> GroupedMessages
+        {
+            get
+            {
+                var result = new List<GroupedMessage>();
+                var currentGroup = new GroupedMessage();
+
+                foreach (var message in Messages)
+                {
+                    if (currentGroup.Sender != message.Sender)
+                    {
+                        if (currentGroup.Sender != null)
+                        {
+                            result.Add(currentGroup);
+                        }
+                        currentGroup = new GroupedMessage
+                        {
+                            Sender = message.Sender,
+                            Messages = new List<string>()
+                        };
+                    }
+                    currentGroup.Messages.Add(message.Text);
+                }
+
+                if (currentGroup.Sender != null)
+                {
+                    result.Add(currentGroup);
+                }
+
+                return result;
+            }
+        }
+
+        [JsonIgnore]
+        public bool HasGroupedMessages => GroupedMessages?.Count > 0;
+
         [JsonPropertyName("tag")]
         public string Tag { get; set; }
 
@@ -135,6 +176,21 @@ namespace Seki.App.Data.Models
         public BitmapImage Icon { get; set; }
     }
 
+    public class GroupedMessage
+    {
+        public string Sender { get; set; }
+        public List<string> Messages { get; set; }
+    }
+
+    public class Message
+    {
+        [JsonPropertyName("sender")]
+        public string Sender { get; set; }
+
+        [JsonPropertyName("text")]
+        public string Text { get; set; }
+    }
+
     public class NotificationAction
     {
         public string Label { get; set; }
@@ -143,9 +199,6 @@ namespace Seki.App.Data.Models
 
     public class DeviceInfo : SocketMessage
     {
-        [JsonPropertyName("id")]
-        public string DeviceId { get; set; }
-
         [JsonPropertyName("deviceName")]
         public string DeviceName { get; set; }
 
@@ -185,9 +238,6 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("artist")]
         public string? Artist { get; set; }
 
-        [JsonPropertyName("thumbnail")]
-        public string? Thumbnail { get; set; }
-
         [JsonPropertyName("volume")]
         public float Volume { get; set; }
 
@@ -225,7 +275,7 @@ namespace Seki.App.Data.Models
         public FileTransfer()
         {
             Type = SocketMessageType.FileTransferType;
-    }
+        }
     }
 
     public class FileMetadata
