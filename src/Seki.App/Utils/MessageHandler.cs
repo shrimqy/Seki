@@ -1,9 +1,11 @@
+﻿using Microsoft.Extensions.Options;
 ﻿using Seki.App.Data.Models;
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -85,10 +87,20 @@ namespace Seki.App.Utils
             System.Diagnostics.Debug.WriteLine($"Received response: {message.ResType}, {message.Content}");
         }
 
-        private static void HandleDeviceInfoMessage(DeviceInfo message, SekiSession session)
+        private static async Task HandleDeviceInfoMessage(DeviceInfo message, SekiSession session)
         {
             System.Diagnostics.Debug.WriteLine($"Received device info: {message.DeviceName}");
             ((SekiServer)session.Server).OnDeviceInfoReceived(message);
+            var currentUserInfo = new CurrentUserInformation();
+            var (username, avatar) = await currentUserInfo.GetCurrentUserInfoAsync();
+
+            // Create and send DeviceInfo
+            var deviceInfo = new DeviceInfo
+            {
+                DeviceName = username,
+                UserAvatar = avatar,
+            };
+            WebSocketService.Instance.SendMessage(JsonSerializer.Serialize<DeviceInfo>(deviceInfo));
         }
 
         private static void HandleDeviceStatusMessage(DeviceStatus message, SekiSession session)

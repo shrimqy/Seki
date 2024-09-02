@@ -149,6 +149,13 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("deviceName")]
         public string DeviceName { get; set; }
 
+        [JsonPropertyName("userAvatar")]
+        public string? UserAvatar { get; set; }
+
+        public DeviceInfo()
+        {
+            Type = SocketMessageType.DeviceInfo;
+        }
     }
 
     public class DeviceStatus : SocketMessage
@@ -182,7 +189,7 @@ namespace Seki.App.Data.Models
         public string? Thumbnail { get; set; }
 
         [JsonPropertyName("volume")]
-        public double Volume { get; set; }
+        public float Volume { get; set; }
 
         [JsonPropertyName("isPlaying")]
         public bool IsPlaying { get; set; }

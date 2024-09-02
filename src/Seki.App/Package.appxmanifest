@@ -7,7 +7,10 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
-  IgnorableNamespaces="uap rescap uap3 uap2">
+  xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10"
+
+  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+  IgnorableNamespaces="uap rescap uap3 uap2 iot uap4">
 
   <Identity
     Name="690be19d-82e3-4871-96b7-d592ec464833"
@@ -53,6 +56,11 @@
     <Capability Name="internetClient"/>
     <uap:Capability Name="musicLibrary"/>
     <uap3:Capability Name="backgroundMediaPlayback"/>
+    <iot:Capability Name="systemManagement"/>
+    <uap:Capability Name="userAccountInformation"/>
+    <uap4:Capability Name="userDataTasks"/>
+    <Capability Name="privateNetworkClientServer"/>
+	 <uap:Capability Name="picturesLibrary"/>
     <DeviceCapability Name="bluetooth"/>
     <DeviceCapability Name="microphone"/>
   </Capabilities>
