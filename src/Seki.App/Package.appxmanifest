@@ -8,7 +8,7 @@
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
   xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10"
-
+  
   xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
   IgnorableNamespaces="uap rescap uap3 uap2 iot uap4">
 
@@ -50,7 +50,7 @@
   </Applications>
 
   <Capabilities>
-    <rescap:Capability Name="runFullTrust" />
+	 <rescap:Capability Name="runFullTrust" />
     <uap3:Capability Name="userNotificationListener"/>
     <Capability Name="internetClientServer"/>
     <Capability Name="internetClient"/>

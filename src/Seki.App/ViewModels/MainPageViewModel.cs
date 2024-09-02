@@ -24,7 +24,7 @@ namespace Seki.App.ViewModels
         private DeviceStatus _deviceStatus = new();
         private bool _connectionStatus = false;
         private ObservableCollection<NotificationMessage> _recentNotifications = [];
-
+        
         public DeviceInfo DeviceInfo
         {
             get => _deviceInfo;
@@ -58,7 +58,6 @@ namespace Seki.App.ViewModels
             get => _recentNotifications;
             set => SetProperty(ref _recentNotifications, value);
         }
-
         public MainPageViewModel()
         {
             _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
@@ -71,23 +70,32 @@ namespace Seki.App.ViewModels
             ToggleConnectionCommand = new RelayCommand(ToggleConnection);
         }
 
-
         private void ToggleConnection()
         {
-            if (ConnectionStatus)
+            if (ConnectionStatus) 
             {
-                WebSocketService.Instance.Stop();
+                WebSocketService.Instance.DisconnectAll();
             }
-            else
+        }
+        private void OnConnectionStatusChange(bool connectionStatus)
+        {
+            System.Diagnostics.Debug.WriteLine($"connection status changed");
+
+            // If the connection is re-established (changing from false to true)
+            if (!_connectionStatus && connectionStatus)
             {
-                WebSocketService.Instance.Start();
+                _dispatcher.TryEnqueue(() => RecentNotifications.Clear()); // Clear recent notifications
+            }
+
+            // Only update the ConnectionStatus property if the status changes
+            if (_connectionStatus != connectionStatus)
+            {
+                _dispatcher.TryEnqueue(() => ConnectionStatus = connectionStatus);
             }
         }
 
         private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
         {
-
-            
             _dispatcher.TryEnqueue(() => DeviceStatus = deviceStatus);
         }
 
@@ -99,11 +107,7 @@ namespace Seki.App.ViewModels
             }
         }
 
-        private void OnConnectionStatusChange(bool connectionStatus)
-        {
-            System.Diagnostics.Debug.WriteLine($"connection status changed");
-            _dispatcher.TryEnqueue(() => ConnectionStatus = connectionStatus);
-        }
+
 
         private void OnNotificationReceived(object? sender, NotificationMessage notification)
         {

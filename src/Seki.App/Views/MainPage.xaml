@@ -50,7 +50,7 @@
         <!--  Main Content  -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350" />
+                <ColumnDefinition Width="380" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -76,13 +76,10 @@
                         <TextBlock Text="{x:Bind ViewModel.DeviceStatus.BatteryStatus, Mode=OneWay}" />
                     </StackPanel>
                     <!--  Connection Status Card  -->
-                    <SplitButton Grid.Column="1" Content="{x:Bind ViewModel.ConnectionButtonText, Mode=OneWay}">
-                        <SplitButton.Flyout>
-                            <MenuFlyout>
-                                <ToggleMenuFlyoutItem Command="{x:Bind ViewModel.ToggleConnectionCommand}" IsChecked="{x:Bind ViewModel.ConnectionStatus, Mode=TwoWay}" />
-                            </MenuFlyout>
-                        </SplitButton.Flyout>
-                    </SplitButton>
+                    <Button
+                        Grid.Column="1"
+                        Command="{x:Bind ViewModel.ToggleConnectionCommand}"
+                        Content="{x:Bind ViewModel.ConnectionButtonText, Mode=OneWay}" />
                 </StackPanel>
 
 

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-﻿using Seki.App.Data.Models;
+using Seki.App.Data.Models;
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
@@ -74,7 +74,7 @@ namespace Seki.App.Utils
             if (message.Content != null)
             {
                 await ClipboardService.Instance.SetContentAsync(message.Content);
-        }
+            }
         }
 
         private static void HandleNotificationMessage(NotificationMessage message)

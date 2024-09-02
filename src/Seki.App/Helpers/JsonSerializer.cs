@@ -28,7 +28,8 @@ namespace Seki.App.Helpers
         public static SocketMessage DeserializeMessage(string json)
         {
             var jsonElement = JsonSerializer.Deserialize<JsonElement>(json, options);
-            if (jsonElement.TryGetProperty("type", out var typeElement))
+
+            if (jsonElement.TryGetProperty("transferType", out _))
             {
                 System.Diagnostics.Debug.WriteLine("serialized FileTransfer");
                 return JsonSerializer.Deserialize<FileTransfer>(json, options)!;
