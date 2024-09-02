@@ -67,11 +67,12 @@ namespace Seki.App.Utils
             }
         }
 
-        private static void HandleClipboardMessage(ClipboardMessage message, SekiSession session)
+        private static async void HandleClipboardMessage(ClipboardMessage message, SekiSession session)
         {
-            var clipboardData = new DataPackage();
-            clipboardData.SetText(message.Content);
-            Clipboard.SetContent(clipboardData);
+            if (message.Content != null)
+            {
+                await ClipboardService.Instance.SetContentAsync(message.Content);
+        }
         }
 
         private static void HandleNotificationMessage(NotificationMessage message)

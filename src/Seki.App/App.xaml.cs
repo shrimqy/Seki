@@ -30,6 +30,7 @@ namespace Seki.App
         private WebSocketService? _webSocketService;
         private PlaybackService? _playbackService;
         private MdnsService? _mdnsService;
+        public static ClipboardService ClipboardService => ClipboardService.Instance;
         public App()
         {
             InitializeComponent();
@@ -51,6 +52,8 @@ namespace Seki.App
                 // Wait for the Window to fully initialize
                 await Task.Delay(10);
 
+                _ = ClipboardService;
+
                 // Show Splash Screen
                 SplashScreenLoadingTCS = new TaskCompletionSource<bool>();
                 MainWindow.Instance.ShowSplashScreen();
@@ -69,8 +72,8 @@ namespace Seki.App
 
                 await InitializePlaybackServiceAsync();
 
-                _clipboardService = new ClipboardService();
-                _clipboardService.ClipboardContentChanged += OnClipboardContentChanged;
+            ClipboardService.ClipboardContentChanged += OnClipboardContentChanged;
+
 
                 var hasSavedDevices = await CheckForSavedDevicesAsync();
                 if (hasSavedDevices != null)
@@ -89,6 +92,7 @@ namespace Seki.App
                 EnsureWindowIsInitialized();
             }
         }
+
 
         private void EnsureWindowIsInitialized()
         {
