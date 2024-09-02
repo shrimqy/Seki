@@ -27,10 +27,23 @@ namespace Seki.App.Services
 
         public async Task InitializeAsync()
         {
+            try
+            {
             _manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+                if (_manager == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Failed to get GlobalSystemMediaTransportControlsSessionManager.");
+                    return;
+                }
+
             _manager.SessionsChanged += Manager_SessionsChanged;
 
             UpdateActiveSessions();
+        }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Exception during initialization: {ex.Message}");
+            }
         }
 
         private void Manager_SessionsChanged(GlobalSystemMediaTransportControlsSessionManager sender, SessionsChangedEventArgs args)
@@ -49,16 +62,24 @@ namespace Seki.App.Services
             {
                 if (!currentSessions.Any(s => s.SourceAppUserModelId == sessionId))
                 {
-                    var removedSession = _activeSessions[sessionId];
+                    if (_activeSessions.TryGetValue(sessionId, out var removedSession))
+                    {
                     UnsubscribeFromSessionEvents(removedSession);
                     _activeSessions.Remove(sessionId);
                     System.Diagnostics.Debug.WriteLine($"Removed session: {sessionId}");
                 }
             }
+            }
 
             // Add new sessions
             foreach (var session in currentSessions)
             {
+                if (session == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Encountered a null session in current sessions.");
+                    continue;
+                }
+
                 if (!_activeSessions.ContainsKey(session.SourceAppUserModelId))
                 {
                     _activeSessions[session.SourceAppUserModelId] = session;
@@ -94,6 +115,8 @@ namespace Seki.App.Services
 
         private async Task UpdatePlaybackDataAsync(GlobalSystemMediaTransportControlsSession session)
         {
+            try
+            {
             var playbackData = await GetPlaybackDataAsync(session);
             if (playbackData != null)
             {
@@ -105,11 +128,35 @@ namespace Seki.App.Services
                 System.Diagnostics.Debug.WriteLine($"Failed to get playback data for {session.SourceAppUserModelId}");
             }
         }
+            catch (COMException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"COM Exception occurred while updating playback data for {session.SourceAppUserModelId}: {ex.Message}");
+                // Consider removing this session from _activeSessions if it's no longer valid
+                _activeSessions.Remove(session.SourceAppUserModelId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Exception occurred while updating playback data for {session.SourceAppUserModelId}: {ex.Message}");
+            }
+        }
 
         public async Task<PlaybackData?> GetPlaybackDataAsync(GlobalSystemMediaTransportControlsSession session)
         {
+            try
+            {
             var mediaProperties = await session.TryGetMediaPropertiesAsync();
+                if (mediaProperties == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Media properties are null for {session.SourceAppUserModelId}");
+                    return null;
+                }
+
             var playbackInfo = session.GetPlaybackInfo();
+                if (playbackInfo == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Playback info is null for {session.SourceAppUserModelId}");
+                    return null;
+                }
 
             var playbackData = new PlaybackData
             {
@@ -127,6 +174,17 @@ namespace Seki.App.Services
             }
 
             return playbackData;
+        }
+            catch (COMException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"COM Exception occurred while getting playback data for {session.SourceAppUserModelId}: {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Exception occurred while getting playback data for {session.SourceAppUserModelId}: {ex.Message}");
+                return null;
+            }
         }
 
         private static async Task<string> ConvertStreamToBase64(IRandomAccessStreamWithContentType stream)
