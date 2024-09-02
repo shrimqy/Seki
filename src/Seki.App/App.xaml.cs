@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.IO;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Seki.App.Helpers;
+using System.Linq;
 
 namespace Seki.App
 {
@@ -25,8 +26,6 @@ namespace Seki.App
 
         public new static App Current
              => (App)Application.Current;
-
-        private ClipboardService? _clipboardService;
         private WebSocketService? _webSocketService;
         private PlaybackService? _playbackService;
         private MdnsService? _mdnsService;
@@ -37,7 +36,6 @@ namespace Seki.App
         }
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-
             _ = ActivateAsync();
 
             async Task ActivateAsync()
@@ -58,39 +56,39 @@ namespace Seki.App
                 SplashScreenLoadingTCS = new TaskCompletionSource<bool>();
                 MainWindow.Instance.ShowSplashScreen();
 
-                // Configure the DI container
-                var host = AppLifeCycleHelper.ConfigureHost();
-                Ioc.Default.ConfigureServices(host.Services);
+            // Configure the DI container
+            var host = AppLifeCycleHelper.ConfigureHost();
+            Ioc.Default.ConfigureServices(host.Services);
 
-                _mdnsService = new MdnsService();
-                _mdnsService.AdvertiseService();
+            _mdnsService = new MdnsService();
+            await _mdnsService.AdvertiseServiceAsync();
 
-                _webSocketService = WebSocketService.Instance;
-                _webSocketService.Start();
+            _webSocketService = WebSocketService.Instance;
+            _webSocketService.Start();
 
-                _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
+            _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
 
-                await InitializePlaybackServiceAsync();
+            await InitializePlaybackServiceAsync();
 
             ClipboardService.ClipboardContentChanged += OnClipboardContentChanged;
 
-
-                var hasSavedDevices = await CheckForSavedDevicesAsync();
-                if (hasSavedDevices != null)
-                {
-                    // Initialize the main application after splash screen completes
-                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
-                }
-                System.Diagnostics.Debug.WriteLine("await for task started");
-                await SplashScreenLoadingTCS.Task;
-                if (SplashScreenLoadingTCS.Task.Result)
-                {
-                    System.Diagnostics.Debug.WriteLine("inside if of result");
-                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
-                }
-                // Hook events for the window
-                EnsureWindowIsInitialized();
+                
+            var hasSavedDevices = await CheckForSavedDevicesAsync();
+            if (hasSavedDevices != null)
+            {
+                // Initialize the main application after splash screen completes
+                _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
             }
+            System.Diagnostics.Debug.WriteLine("await for task started");
+            await SplashScreenLoadingTCS.Task;
+            if (SplashScreenLoadingTCS.Task.Result)
+            {
+                System.Diagnostics.Debug.WriteLine("inside if of result");
+                _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+            }
+            // Hook events for the window
+            EnsureWindowIsInitialized();
+        }
         }
 
 

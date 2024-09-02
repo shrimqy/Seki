@@ -1,4 +1,5 @@
-﻿using NetCoreServer;
+﻿using Microsoft.Windows.System;
+using NetCoreServer;
 using Seki.App.Data.Models;
 using Seki.App.Helpers;
 using Seki.App.Utils;
@@ -10,6 +11,12 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.SocialInfo;
+using Windows.ApplicationModel.UserDataAccounts;
+using Windows.Storage.Streams;
+using Windows.System;
+using Windows.System.UserProfile;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Seki.App.Services
 {
@@ -56,10 +63,21 @@ namespace Seki.App.Services
             }
         }
 
+        public void DisconnectAll()
+        {
+            if (_isRunning)
+            {
+                _webSocketServer.DisconnectAll();
+                System.Diagnostics.Debug.WriteLine("Disconnected all sessions.");
+            }
+        }
+
         public void SendMessage(string message)
         {
             if (_isRunning)
             {
+
+                System.Diagnostics.Debug.WriteLine(message);
                 _webSocketServer.MulticastText(message);
             }
         }
@@ -109,6 +127,7 @@ namespace Seki.App.Services
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
+
         public void OnDeviceInfoReceived(DeviceInfo deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
@@ -126,8 +145,11 @@ namespace Seki.App.Services
         private readonly SekiServer _server = server;
         public FileTransferService _fileTransferService = new FileTransferService();
 
+        private MdnsService? _mdnsService;
         public override void OnWsConnected(HttpRequest request)
         {
+            _mdnsService = new MdnsService();
+            _mdnsService.UnAdvertiseService();
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} connected!");
             SendMessage(new Response { ResType = "Status", Content = "Connected" });
             _server.OnConnectionStatusChange(true);
@@ -135,9 +157,12 @@ namespace Seki.App.Services
 
         public override void OnWsDisconnected()
         {
+            _mdnsService = new MdnsService();
+            _ = _mdnsService.AdvertiseServiceAsync();
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} disconnected!");
             _server.OnConnectionStatusChange(false);
         }
+
 
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
