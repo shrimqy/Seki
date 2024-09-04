@@ -44,6 +44,12 @@ namespace Seki.App
                 var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
                 var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
 
+                // Manage startup task and minimize if necessary
+                await HandleStartupTaskAsync(isStartupTask);
+
+                // Hook events for the window
+                EnsureWindowIsInitialized();
+
                 // Initialize and activate MainWindow
                 MainWindow.Instance.Activate();
 
@@ -103,8 +109,9 @@ namespace Seki.App
                 }
             };
             MainWindow.Instance.Activated += Window_Activated;
-            //Window.Closed += Window_Closed;
+            MainWindow.Instance.Closed += Window_Closed;
         }
+
 
         public static async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
         {
@@ -125,8 +132,15 @@ namespace Seki.App
         }
         private void Window_Closed(object sender, WindowEventArgs args)
         {
-            // Cache the window instead of closing it
+            // Check if MainWindow.Instance and AppWindow are not null
+            if (MainWindow.Instance != null && MainWindow.Instance.AppWindow != null)
+            {
+                // Hide the window instead of closing it
             MainWindow.Instance.AppWindow.Hide();
+
+                // Prevent the default close operation
+                args.Handled = true;
+            }
 
             Thread.Yield();
         }

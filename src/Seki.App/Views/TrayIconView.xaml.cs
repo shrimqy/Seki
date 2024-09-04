@@ -20,7 +20,8 @@ namespace Seki.App.Views
         public void ShowHideWindow()
         {
             var window = MainWindow.Instance;
-            if (window == null)
+            // Ensure window and AppWindow are not null
+            if (window == null || window.AppWindow == null)
             {
                 return;
             }
