@@ -31,15 +31,13 @@ namespace Seki.App.Utils
         }
 
 
-        public static void ChangeVolumeToMinLevel(double level)
+        public static void ChangeVolume(double level)
         {
-            if (level > 1)
-                level = 1;
-            else if (level < 0)
-                level = 0;
+            var volume = level / 100;
 
             try
             {
+                float newAudioValue = Convert.ToSingle(volume);
                 var masterVol = GetAudioEndpointVolumeInterface();
                 if (masterVol == null)
                     return;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
 using Windows.Media;
 using Windows.Media.Control;
@@ -15,20 +16,70 @@ using Windows.Storage;
 using System.IO;
 using Windows.Media.Devices;
 using Seki.App.Utils;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Seki.App.Services
 {
-    public class PlaybackService
+    public class PlaybackService : ObservableObject
     {
         private static PlaybackService? _instance;
         public static PlaybackService Instance => _instance ??= new PlaybackService();
+
 
         private GlobalSystemMediaTransportControlsSessionManager? _manager;
         private Dictionary<string, GlobalSystemMediaTransportControlsSession> _activeSessions = new Dictionary<string, GlobalSystemMediaTransportControlsSession>();
 
         public event EventHandler<PlaybackData>? PlaybackDataChanged;
+        private bool _connectionStatus = false;
+        public bool ConnectionStatus
+        {
+            get => _connectionStatus;
+            set
+            {
+                if (SetProperty(ref _connectionStatus, value))
+                {
+                    OnConnectionStatusChange(_connectionStatus);
+                }
+            }
+        }
 
-        private PlaybackService() { }
+
+        private PlaybackService() 
+        {
+            WebSocketService.Instance.ConnectionStatusChange += OnConnectionStatusChange;
+        }
+
+        private void OnConnectionStatusChange(bool connectionStatus)
+        {
+            ConnectionStatus = connectionStatus;
+            TriggerPlaybackDataUpdate();
+        }
+
+
+        private async void TriggerPlaybackDataUpdate()
+        {
+            if (_activeSessions.Any())
+            {
+                foreach (var session in _activeSessions.Values)
+                {
+                    var playbackData = await GetPlaybackDataAsync(session);
+                    if (playbackData != null)
+                    {
+                        PlaybackDataChanged?.Invoke(this, playbackData);
+                    }
+                }
+            }
+            else
+            {
+                // No active sessions, but you can still trigger a volume update or send default data.
+                var volumeData = new PlaybackData
+                {
+                    Volume = VolumeControl.GetMasterVolume() * 100,
+                    // Other default or null fields...
+                };
+                PlaybackDataChanged?.Invoke(this, volumeData);
+            }
+        }
 
         public async Task InitializeAsync()
         {
@@ -238,15 +289,23 @@ namespace Seki.App.Services
 
         public async Task HandleMediaActionAsync(PlaybackData message)
         {
-            if (!_activeSessions.TryGetValue(message.AppName, out var session))
-            {
-                System.Diagnostics.Debug.WriteLine($"No active media session found for {message.AppName}");
-                return;
-            }
 
             if (!Enum.TryParse(message.MediaAction, true, out MediaAction action))
             {
                 System.Diagnostics.Debug.WriteLine($"Unknown action: {message.MediaAction}");
+                return;
+            }
+
+            // Handle volume change directly
+            if (action.Equals(MediaAction.VOLUME))
+            {
+                VolumeControl.ChangeVolume(message.Volume);
+                return;
+            }
+
+            if (!_activeSessions.TryGetValue(message.AppName, out var session))
+            {
+                System.Diagnostics.Debug.WriteLine($"No active media session found for {message.AppName}");
                 return;
             }
 
