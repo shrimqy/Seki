@@ -145,6 +145,22 @@ namespace Seki.App
             Thread.Yield();
         }
 
+        private static async Task HandleStartupTaskAsync(bool isStartupTask)
+        {
+            StartupTask startupTask = await StartupTask.GetAsync("8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0");
+            if (isStartupTask)
+            {
+                // Minimize the app if launched at startup
+                //MainWindow.Instance.AppWindow.Hide();
+            }
+
+            // Ensure the startup task is enabled
+            if (startupTask.State == StartupTaskState.DisabledByUser || startupTask.State == StartupTaskState.Disabled)
+            {
+                await startupTask.RequestEnableAsync();
+            }
+        }
+
         private async Task InitializePlaybackServiceAsync()
         {
             System.Diagnostics.Debug.WriteLine("Starting PlaybackService initialization");

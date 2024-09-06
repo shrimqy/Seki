@@ -41,16 +41,6 @@ namespace Seki.App.Utils
                 var masterVol = GetAudioEndpointVolumeInterface();
                 if (masterVol == null)
                     return;
-
-                // Make sure that the audio is not muted
-                masterVol.SetMute(false, Guid.Empty);
-
-                // Only adapt volume if the current level is below the specified minimum level
-                var currentAudioValue = masterVol.GetMasterVolumeLevelScalar();
-                float newAudioValue = Convert.ToSingle(level);
-                if (currentAudioValue > newAudioValue)
-                    return;
-
                 masterVol.SetMasterVolumeLevelScalar(newAudioValue, Guid.Empty);
             }
             catch { }
