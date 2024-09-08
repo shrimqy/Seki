@@ -32,6 +32,14 @@
         <HoursBetweenUpdateChecks>168</HoursBetweenUpdateChecks>
   </PropertyGroup>
 	
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<DefineConstants>TRACE;DEBUG;NETFX_CORE;DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+		<DefineConstants>TRACE;RELEASE;NETFX_CORE;DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+		<Optimize>true</Optimize>
+	</PropertyGroup>
+	
   <ItemGroup>
     <Compile Remove="GlobalUsing.cs" />
   </ItemGroup>

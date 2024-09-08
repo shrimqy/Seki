@@ -40,8 +40,8 @@ namespace Seki.App
 
             async Task ActivateAsync()
             {
-                // Get AppActivationArguments
-                var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+                // Get AppActivationArgumentsTask
+                var activatedEventArgs = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
                 var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
 
                 // Manage startup task and minimize if necessary
@@ -50,8 +50,11 @@ namespace Seki.App
                 // Hook events for the window
                 EnsureWindowIsInitialized();
 
-                // Initialize and activate MainWindow
+                // Only activate if not already open
+                if (!MainWindow.Instance.AppWindow.IsVisible)
+                {
                 MainWindow.Instance.Activate();
+                }
 
                 // Wait for the Window to fully initialize
                 await Task.Delay(10);
@@ -112,8 +115,10 @@ namespace Seki.App
             MainWindow.Instance.Closed += Window_Closed;
         }
 
-
-        public static async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
+        /// <summary>
+        /// Gets invoked when the application is activated.
+        /// </summary>
+        public async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
         {
             var activatedEventArgsData = activatedEventArgs.Data;
             // Called from Program class
