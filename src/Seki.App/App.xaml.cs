@@ -65,6 +65,10 @@ namespace Seki.App
                 SplashScreenLoadingTCS = new TaskCompletionSource<bool>();
                 MainWindow.Instance.ShowSplashScreen();
 
+                // Hook events for the window
+                //MainWindow.Instance.Closed += Window_Closed;
+                MainWindow.Instance.Activated += Window_Activated;
+
             // Configure the DI container
             var host = AppLifeCycleHelper.ConfigureHost();
             Ioc.Default.ConfigureServices(host.Services);
@@ -107,6 +111,7 @@ namespace Seki.App
             {
                 if (HandleClosedEvents)
                 {
+                    // If HandleClosedEvents is true, we hide the window (tray icon exit logic can change this)
                     args.Handled = true;
                     MainWindow.Instance.AppWindow.Hide();
                 }

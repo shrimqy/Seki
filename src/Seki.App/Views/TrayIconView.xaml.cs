@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Controls;
+using System;
 
 
 namespace Seki.App.Views
@@ -40,9 +41,11 @@ namespace Seki.App.Views
         [RelayCommand]
         public void ExitApplication()
         {
+            var window = MainWindow.Instance;
             App.HandleClosedEvents = false;
             TrayIcon.Dispose();
-            MainWindow.Instance?.Close();
+            window.Close();
+            App.Current.Exit();
         }
     }
 }
