@@ -46,6 +46,22 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.shareTarget">
+          <uap:ShareTarget>
+            <uap:SupportedFileTypes>
+              <uap:SupportsAnyFileType/>
+            </uap:SupportedFileTypes>
+			  <uap:DataFormat>StorageItems</uap:DataFormat>
+          </uap:ShareTarget>
+        </uap:Extension>
+		<uap5:Extension Category="windows.startupTask">
+			<uap5:StartupTask
+			TaskId="8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0"
+			Enabled="false"
+			DisplayName="Seki" />
+		 </uap5:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
