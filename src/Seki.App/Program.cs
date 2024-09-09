@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Seki.App.Helpers;
 using Seki.App.Extensions;
 using System.Threading;
+using Windows.ApplicationModel.Activation;
 
 namespace Seki.App
 {
@@ -79,9 +80,17 @@ namespace Seki.App
 
         private static async void OnActivated(object? sender, AppActivationArguments args)
         {
-            // WINUI3: Verify if needed or OnLaunched is called
             if (App.Current is App thisApp)
-                await thisApp.OnActivatedAsync(args);
+            {
+                if (args.Kind == ExtendedActivationKind.ShareTarget)
+                {
+                    await thisApp.HandleShareTargetActivation(args.Data as ShareTargetActivatedEventArgs);
+                }
+                else
+                {
+                    await thisApp.OnActivatedAsync(args);
+                }
+            }
         }
     }
 }

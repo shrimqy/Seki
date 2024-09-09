@@ -14,6 +14,13 @@ using System.IO;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Seki.App.Helpers;
 using System.Linq;
+using Windows.ApplicationModel;
+using Microsoft.Extensions.Logging;
+using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.DataTransfer.ShareTarget;
+using Windows.ApplicationModel.DataTransfer;
+using Microsoft.UI.Windowing;
+using Seki.App.Views;
 
 namespace Seki.App
 {
@@ -33,8 +40,10 @@ namespace Seki.App
         public App()
         {
             InitializeComponent();
+            CheckStartupSetting();
         }
-        protected override void OnLaunched(LaunchActivatedEventArgs args)
+
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             _ = ActivateAsync();
 
@@ -140,35 +149,37 @@ namespace Seki.App
                 return;
             ApplicationData.Current.LocalSettings.Values["INSTANCE_ACTIVE"] = -Environment.ProcessId;
         }
-        private void Window_Closed(object sender, WindowEventArgs args)
+
+        private async void CheckStartupSetting()
         {
-            // Check if MainWindow.Instance and AppWindow are not null
-            if (MainWindow.Instance != null && MainWindow.Instance.AppWindow != null)
+            // Fetch the startup setting from the local settings
+            if (ApplicationData.Current.LocalSettings.Values.TryGetValue("Startup", out var isStartupEnabled))
             {
-                // Hide the window instead of closing it
-            MainWindow.Instance.AppWindow.Hide();
+                bool enableStartup = (bool)isStartupEnabled;
 
-                // Prevent the default close operation
-                args.Handled = true;
+                // Call HandleStartupTaskAsync with the user's preference
+                await HandleStartupTaskAsync(enableStartup);
             }
-
-            Thread.Yield();
+            else
+            {
+                // If there's no setting, set it to false by default (do not start at startup)
+                ApplicationData.Current.LocalSettings.Values["Startup"] = false;
+                await HandleStartupTaskAsync(false);
+        }
         }
 
         private static async Task HandleStartupTaskAsync(bool isStartupTask)
         {
-            StartupTask startupTask = await StartupTask.GetAsync("8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0");
+            // Only proceed if the startup task should be enabled
             if (isStartupTask)
             {
-                // Minimize the app if launched at startup
-                //MainWindow.Instance.AppWindow.Hide();
-            }
-
+                StartupTask startupTask = await StartupTask.GetAsync("8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0");
             // Ensure the startup task is enabled
             if (startupTask.State == StartupTaskState.DisabledByUser || startupTask.State == StartupTaskState.Disabled)
             {
                 await startupTask.RequestEnableAsync();
             }
+        }
         }
 
         private async Task InitializePlaybackServiceAsync()
