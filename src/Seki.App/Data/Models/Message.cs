@@ -269,8 +269,8 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("metadata")]
         public FileMetadata? Metadata { get; set; }
 
-        [JsonPropertyName("chunkData")]
-        public string? chunkData { get; set; }
+        [JsonPropertyName("data")]
+        public ByteArrayContent? Data { get; set; }
 
         public FileTransfer()
         {
