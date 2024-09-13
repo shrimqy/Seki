@@ -1,49 +1,55 @@
+<p align="center">
+  <img alt="Files hero image" src="./.github/readme-images/ReadmeHero.png" />
+</p>
 # Seki
 
 **Seki** is a custom-built Windows app designed to enhance your workflow by enabling seamless clipboard and notification sharing between your Windows PC and Android device. It's an alternative to existing solutions, tailored for users who want a straightforward and efficient way to keep their devices in sync.
-
 ## Features
 
-- **Clipboard Sharing**: Instantly share clipboard content between your Windows PC and Android device.
-- **Notification Mirroring**: Receive Android notifications directly on your Windows PC.
-- **Planned Features**:
-  - File Sharing
-  - Notification Actions
-  - Device Controls (e.g., screen sharing, remote input)
-
-## Tech Stack
-
-- **Windows**: WinUI 3, C#
-- **Android**: [Sekia](https://github.com/shrimqy/Sekia) (Kotlin, Jetpack Compose)
-
-## Installation
-
-### Windows
-
-1. **Download the Installer**: [Drive](https://drive.google.com/drive/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G?usp=sharing).
-2. **Install the Certificate**:
-   - Manually install the provided certificate (Trusted Root Certification Authorities, try other certifications stores as well if it doesn't work) in order to install the app .
-3. **Run the App**:
-   - Launch the Seki app, on the loading screen open up the app on android and connect.
-
-### Android
-
-1. **Download the Android App**: [Sekia for Android](https://github.com/shrimqy/Sekia).
-2. **Install the APK and Configure Permissions**:
-   - Allow restricted access and grant notification permissions when prompted on your Android device.
-
-## How to Use
-
-1. **Set Up**:
-   - Make sure both your Windows PC and Android device are connected to the same network.
-   - Open Seki on your Windows PC and Sekia on your Android device.
-   - Follow the prompts to establish a connection between the two devices.
-2. **Clipboard Sharing**:
-   - Copy text or other content on one device, and paste it directly on the other.
-3. **Notification Mirroring**:
-   - View your Android notifications on your Windows PC and stay up to date without switching devices.
+- **Clipboard Sharing**: Seamlessly share clipboard content between your Android device and Windows PC.
+- **Media Control**: Control media playback and volume of your PC from android. 
+- **File Sharing**: Share files between your devices easily.
+- **Notification**: Allows toasting the notifications from your android in desktop.
 
 ## Limitations
 
-- **Manual Certificate Installation**:
-  - The current version requires manual certificate installation to install the app, and the app's UI is still under development.
+- **Clipboard Sharing on Android 13+**:
+    - Due to Android's restrictions, clipboard sharing is only possible via the sharesheet after Android 13.
+## Installation
+
+
+## How to Use
+
+1. **Setting Up**:
+    - Permissions: Allow the app to post notifications, location access, and restricted access from App Info (after trying to grant the notification access), .
+    - Ensure both your Android device and Windows PC are connected to the same network.
+    - Launch the app on your Windows PC.
+    - Try to add a new device from the device card or device tab(Pull to refresh if it doesn't show any devices).
+
+2. **Clipboard Sharing**:
+    - Copy content on the desktop and it will automatically sync with your android (That is if you have enabled it from the settings).
+    - To share clipboard from android you will have to manually sent it through the share sheet that shows after you perform a copy action).
+3. **File Transfer**:
+    - Use the share sheet from android/windows and select the app to share any files between the devices. 
+
+
+## Screenshots
+
+<p align="center">
+  <img alt="Files hero image" src="./.github/readme-images/Screenshot.png" />
+</p>
+
+## Roadmap
+
+- Notification Actions.
+- Exploring Device Files.
+- Screen Casting
+
+## Tech Stack
+
+- **Android**: Kotlin, Jetpack Compose
+- **Desktop**: [Seki](https://github.com/shrimqy/Seki) (WinUI 3, C#)
+- **Network**: Mdns, Websockets. 
+## License
+
+Sekia is licensed under the  GNU GENERAL PUBLIC LICENSE. See [LICENSE](https://github.com/shrimqy/Sekia/blob/master/LICENSE) for more details.
