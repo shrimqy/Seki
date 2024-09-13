@@ -3,25 +3,27 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
-  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+    xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
   xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10"
-  
-  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+ 
   IgnorableNamespaces="uap rescap uap3 uap2 iot uap4">
 
   <Identity
-    Name="690be19d-82e3-4871-96b7-d592ec464833"
-    Publisher="CN=shrimpy"
-    Version="0.1.0.0" />
+    Name="shrimqy.Seki-PhoneLink"
+    Publisher="CN=BEC0F2AA-07EB-4762-A2FE-13550AF289A5"
+    Version="0.2.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="690be19d-82e3-4871-96b7-d592ec464833" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="63ccd14b-5fc5-46d6-acd9-c08012e5569c" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Seki.App</DisplayName>
-    <PublisherDisplayName>shrim</PublisherDisplayName>
+    <DisplayName>Seki - Phone Link</DisplayName>
+    <PublisherDisplayName>shrimqy</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

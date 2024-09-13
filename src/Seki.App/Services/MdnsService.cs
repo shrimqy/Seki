@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using MeaMod.DNS.Multicast;
+using Seki.App.Utils;
+
 
 namespace Seki.App.Services
 {
@@ -38,7 +42,7 @@ namespace Seki.App.Services
                 _serviceDiscovery.Unadvertise(_serviceProfile);
             }
             else
-        {
+            {
                 System.Diagnostics.Debug.WriteLine("Service not advertised or already unadvertised.");
             }
         }

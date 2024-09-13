@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Seki.App.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -14,6 +14,10 @@
 
     <Page.Resources>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <converters:StringNullOrEmptyToBooleanConverter x:Key="StringNullOrEmptyToBooleanConverter" />
+        <converters:DateTimeConverter x:Key="DateTimeConverter" />
+        <converters:BatteryStatusToIconConverter x:Key="BatteryStatusToIconConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -50,12 +54,12 @@
         <!--  Main Content  -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="360" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!--  Left Panel: Device Info and Notifications  -->
-            <Grid Grid.Column="0">
+            <Grid Grid.Column="0" Padding="0,0,5,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -70,11 +74,22 @@
                     <TextBlock
                         FontSize="24"
                         FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.DeviceInfo.DeviceName, Mode=OneWay}" />
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="Battery Status:" />
-                        <TextBlock Text="{x:Bind ViewModel.DeviceStatus.BatteryStatus, Mode=OneWay}" />
+                        Text="{x:Bind ViewModel.DeviceInfo.Name, Mode=OneWay}" />
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="5"
+                        Visibility="{x:Bind ViewModel.DeviceInfo.Name, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
+                        <FontIcon Glyph="{x:Bind ViewModel.DeviceStatus, Converter={StaticResource BatteryStatusToIconConverter}, Mode=OneWay}" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="1"
+                            Visibility="{x:Bind ViewModel.DeviceStatus.BatteryStatus, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
+                            <TextBlock FontWeight="SemiBold" Text="{x:Bind ViewModel.DeviceStatus.BatteryStatus, Mode=OneWay}" />
+                            <TextBlock FontWeight="SemiBold" Text="%" />
+                        </StackPanel>
                     </StackPanel>
+
                     <!--  Connection Status Card  -->
                     <Button
                         Grid.Column="1"
@@ -95,11 +110,32 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock
-                        Grid.Row="0"
-                        FontSize="20"
-                        FontWeight="SemiBold"
-                        Text="Notifications" />
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  Notifications Heading  -->
+                        <TextBlock
+                            Grid.Column="0"
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Text="Notifications" />
+
+                        <!--  Clear All Button  -->
+                        <Button
+                            Grid.Column="1"
+                            Margin="0,0,20,0"
+                            Padding="10,5"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Command="{x:Bind ViewModel.ClearAllNotificationsCommand}"
+                            Content="Clear All"
+                            FontSize="14" />
+                    </Grid>
                     <ScrollViewer
                         Grid.Row="1"
                         Margin="0,10,0,0"
@@ -108,7 +144,7 @@
                         VerticalScrollBarVisibility="Auto">
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.RecentNotifications, Mode=OneWay}">
                             <ItemsRepeater.Layout>
-                                <StackLayout Orientation="Vertical" Spacing="10" />
+                                <StackLayout Orientation="Vertical" Spacing="7" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="local:NotificationMessage">
@@ -116,7 +152,9 @@
                                         Padding="10"
                                         Background="{ThemeResource SystemAltLowColor}"
                                         BorderThickness="1"
-                                        CornerRadius="8">
+                                        CornerRadius="8"
+                                        PointerEntered="OnPointerEntered"
+                                        PointerExited="OnPointerExited">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
@@ -129,12 +167,41 @@
                                                 VerticalAlignment="Top"
                                                 Source="{x:Bind Icon, Mode=OneWay}" />
                                             <StackPanel Grid.Column="1" Spacing="5">
-                                                <TextBlock FontWeight="SemiBold" Text="{x:Bind AppName}" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind AppName}" />
+                                                    <TextBlock
+                                                        x:Name="TimeStampTextBlock"
+                                                        Grid.Column="1"
+                                                        Margin="0,0,0,0"
+                                                        Foreground="Gray"
+                                                        HorizontalTextAlignment="End"
+                                                        Text="{x:Bind TimeStamp, Converter={StaticResource DateTimeConverter}}"
+                                                        Visibility="Visible" />
+                                                    <Button
+                                                        x:Name="CloseButton"
+                                                        Grid.Column="1"
+                                                        Width="20"
+                                                        Height="20"
+                                                        Margin="0,0,0,0"
+                                                        Padding="0"
+                                                        Click="OnCloseButtonClick"
+                                                        IsHitTestVisible="False"
+                                                        Opacity="0"
+                                                        Style="{StaticResource AlternateCloseButtonStyle}"
+                                                        Tag="{x:Bind NotificationKey}" />
+                                                </Grid>
+
+
                                                 <TextBlock
+                                                    x:Name="TitleTextBlock"
+                                                    x:Load="{x:Bind ShouldShowTitle}"
                                                     FontWeight="SemiBold"
                                                     Text="{x:Bind Title}"
                                                     TextWrapping="Wrap" />
-
                                                 <!--  Display Text if GroupedMessages is empty  -->
                                                 <TextBlock
                                                     x:Name="FallbackTextBlock"
@@ -142,7 +209,6 @@
                                                     Foreground="Gray"
                                                     Text="{x:Bind Text}"
                                                     TextWrapping="Wrap" />
-
                                                 <!--  Display GroupedMessages if not empty  -->
                                                 <ItemsRepeater
                                                     x:Name="GroupedMessagesRepeater"
@@ -182,23 +248,38 @@
                 </Grid>
             </Grid>
 
-            <!--  Right Panel: NavigationView  -->
             <NavigationView
                 Grid.Column="1"
+                Background="#1d1d1d"
                 IsBackButtonVisible="Collapsed"
                 IsSettingsVisible="False"
-                PaneDisplayMode="Top">
+                PaneDisplayMode="Top"
+                SelectionChanged="NavigationView_SelectionChanged">
+
                 <NavigationView.MenuItems>
-                    <!--  Add your menu items here  -->
-                    <NavigationViewItem Content="Home" Icon="Home" />
-                    <NavigationViewItem Content="Settings" Icon="Setting" />
-                    <!--  Add more items as needed  -->
+                    <NavigationViewItem
+                        Content="Settings"
+                        Icon="Setting"
+                        IsSelected="True"
+                        Tag="Settings" />
                 </NavigationView.MenuItems>
-
-
-                <Frame x:Name="ContentFrame" />
+                <Frame x:Name="ContentFrame" Margin="0,-1" />
             </NavigationView>
         </Grid>
+
+        <TeachingTip
+            x:Name="FirstTimeTeachingTip"
+            Title="Welcome to Seki!"
+            ActionButtonClick="OnDownloadButtonClick"
+            ActionButtonContent="Download"
+            CloseButtonContent="Close"
+            Closed="OnTeachingTipClosed"
+            IsOpen="False"
+            Subtitle="Download the Android app to get started.">
+            <TeachingTip.IconSource>
+                <SymbolIconSource Symbol="Download" />
+            </TeachingTip.IconSource>
+        </TeachingTip>
 
         <views:TrayIconView
             x:Name="TrayIcon"

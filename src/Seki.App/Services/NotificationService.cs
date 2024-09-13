@@ -23,12 +23,11 @@ namespace Seki.App.Services
 
         public static async void ShowDesktopNotification(NotificationMessage notificationMessage)
         {
+
             if (notificationMessage.Title != null && notificationMessage.AppName != notificationMessage.Title)
             {
                 _notificationHistory.Add(notificationMessage);
                 NotificationReceived?.Invoke(null, notificationMessage);
-                
-
                 // Add large icon
                 // Handle icon for Windows notification
                 if (!string.IsNullOrEmpty(notificationMessage.LargeIcon))
@@ -78,7 +77,20 @@ namespace Seki.App.Services
                     AppNotificationManager.Default.Show(appNotification);
                 }
             }
-            System.Diagnostics.Debug.WriteLine($"Showed or updated notification: {notificationMessage.Title}");
+            else if (notificationMessage.NotificationType == "REMOVED")
+            {
+                NotificationReceived?.Invoke(null, notificationMessage);
+                // Find and remove the notification from the history
+                var notificationToRemove = _notificationHistory.FirstOrDefault(n => n.NotificationKey == notificationMessage.NotificationKey);
+                if (notificationToRemove != null)
+                {
+                    if (_notificationHistory.Remove(notificationToRemove))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Removed notification: {notificationMessage.NotificationKey}");
+                    }
+                }
+                NotificationReceived?.Invoke(null, notificationMessage);
+            }
         }
 
         private static async Task SetNotificationIcon(AppNotificationBuilder builder, string iconBase64, string fileName)

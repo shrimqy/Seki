@@ -21,8 +21,8 @@
   <!-- Store Badge -->
   <a style="text-decoration:none" href="https://apps.microsoft.com/detail/9PJV6D1JPG0H?launch=true&mode=full">
     <picture>
-      <source media="(prefers-color-scheme: light)" srcset="./readme-images/StoreBadge-dark.png" width="220" />
-      <img src="./readme-images/StoreBadge-light.png" width="220" />
+      <source media="(prefers-color-scheme: light)" srcset=".github/./readme-images/StoreBadge-dark.png" width="220" />
+      <img src=".github/./readme-images/StoreBadge-light.png" width="220" />
   </picture></a>
 </p>
 

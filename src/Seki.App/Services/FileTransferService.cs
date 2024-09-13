@@ -29,6 +29,8 @@ namespace Seki.App.Services
         private FileStream? currentFileStream;
         private readonly string downloadFolder;
 
+        private string FilePath;
+
         public FileTransferService()
         {
             // Load the saved location from local settings or use the default Downloads folder
@@ -63,7 +65,7 @@ namespace Seki.App.Services
             switch (message.TransferType)
             {
                 case nameof(FileTransferType.WEBSOCKET):
-                    HandleWebSocketTransfer(message);
+                    await HandleWebSocketTransfer(message);
                     break;
                 case nameof(FileTransferType.HTTP):
                     // await HandleHttpTransfer(message);
@@ -75,39 +77,76 @@ namespace Seki.App.Services
             }
         }
 
-        public void HandleWebSocketTransfer(FileTransfer message)
+        public async Task HandleWebSocketTransfer(FileTransfer message)
         {
-            if (message.Metadata != null)
+            switch (message.DataTransferType)
             {
-                // Start a new file transfer
-                currentFileMetadata = message.Metadata;
-                string filePath = Path.Combine(downloadFolder, currentFileMetadata.FileName);
-                currentFileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("Received file transfer message without metadata");
+                case nameof(DataTransferType.METADATA):
+                    await handleMetadata(message.Metadata);
+                    break;
+                case nameof(DataTransferType.CHUNK):
+                    await ReceiveFileData(message.ChunkData);
+                    break;
             }
         }
 
-        public void ReceiveFileData(byte[] data, int offset, int count)
+        public async Task handleMetadata(FileMetadata metadata)
         {
+            if (metadata != null)
+            {
+                currentFileMetadata = metadata;
+                System.Diagnostics.Debug.WriteLine("Metadata received: " + metadata.FileName + " Size: " + metadata.FileSize);
+
+                FilePath = Path.Combine(downloadFolder, currentFileMetadata.FileName);
+
+                try
+                {
+                    currentFileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    System.Diagnostics.Debug.WriteLine($"File stream created for {currentFileMetadata.FileName} at {FilePath}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error creating file stream: {ex.Message}");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Metadata is null");
+            }
+        }
+
+        public async Task ReceiveFileData(string base64Data)
+        {
+            System.Diagnostics.Debug.WriteLine("current Filemetada: {}");
             if (currentFileStream == null || currentFileMetadata == null)
             {
                 System.Diagnostics.Debug.WriteLine("Received file data without metadata or file stream is not initialized");
                 return;
             }
 
-            currentFileStream.Write(data, offset, count);
-
-            if (currentFileStream.Length >= currentFileMetadata.FileSize)
+            try
             {
-                // File transfer complete
-                SaveFile();
+                System.Diagnostics.Debug.WriteLine("Chunk Processing");
+                // Decode the Base64 string to a byte array
+                byte[] fileData = Convert.FromBase64String(base64Data);
+
+                // Write the byte array to the file stream
+                await currentFileStream.WriteAsync(fileData, 0, fileData.Length);
+
+                // Check if the file transfer is complete
+                if (currentFileStream.Length >= currentFileMetadata.FileSize)
+                {
+                    // File transfer complete
+                    await SaveFile();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error receiving file data: {ex.Message}");
             }
         }
 
-        private void SaveFile()
+        private async Task SaveFile()
         {
             if (currentFileStream == null || currentFileMetadata == null)
             {
@@ -128,6 +167,19 @@ namespace Seki.App.Services
             appNotification.ExpiresOnReboot = true;
             AppNotificationManager.Default.Show(appNotification);
 
+
+            var isClipboardFileEnabled = (bool?)ApplicationData.Current.LocalSettings.Values["ClipboardFiles"] ?? false;
+            if (isClipboardFileEnabled)
+            {
+                // Add the saved file to the clipboard
+                var dataPackage = new DataPackage();
+                var file = await StorageFile.GetFileFromPathAsync(FilePath);
+                dataPackage.SetStorageItems(new List<StorageFile> { file });
+                Clipboard.SetContent(dataPackage);
+
+                System.Diagnostics.Debug.WriteLine($"File {currentFileMetadata.FileName} added to clipboard.");
+            }
+            
             // Clean up metadata
             currentFileMetadata = null;
         }
@@ -192,7 +244,7 @@ namespace Seki.App.Services
                     var fileMetadata = new FileMetadata
                     {
                         FileName = file.Name,
-                        FileType = file.FileType,
+                        MimeType = file.ContentType,
                         FileSize = ((long)stream.Size),
                         Uri = file.Path // Assuming Uri is the file path, adjust if needed
                     };
@@ -200,7 +252,8 @@ namespace Seki.App.Services
                     // Prepare FileTransfer object for metadata
                     var metadataTransfer = new FileTransfer
                     {
-                        TransferType = "Metadata",
+                        TransferType = nameof(FileTransferType.WEBSOCKET),
+                        DataTransferType = nameof(DataTransferType.METADATA),
                         Metadata = fileMetadata
                     };
 
@@ -224,8 +277,9 @@ namespace Seki.App.Services
                         // Prepare FileTransfer object for chunk data
                         var chunkTransfer = new FileTransfer
                         {
-                            TransferType = "Chunk",
-                            chunkData = Convert.ToBase64String(chunk) // Base64 encoding here
+                            TransferType = nameof(FileTransferType.WEBSOCKET),
+                            DataTransferType = nameof(DataTransferType.CHUNK),
+                            ChunkData = Convert.ToBase64String(chunk) // Base64 encoding here
                         };
 
                         string jsonMessage = SocketMessageSerializer.Serialize(chunkTransfer);
@@ -241,14 +295,6 @@ namespace Seki.App.Services
                         await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() => ReportProgress(progress));
                     }
                 }
-
-                // Send completion message
-                var completionTransfer = new FileTransfer
-                {
-                    TransferType = "Completed"
-                };
-                await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
-                    WebSocketService.Instance.SendMessage(JsonSerializer.Serialize(completionTransfer)));
             }
             catch (Exception ex)
             {

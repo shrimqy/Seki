@@ -27,7 +27,7 @@ namespace Seki.App.Services
         private bool _isRunning;
 
         public event Action<DeviceStatus>? DeviceStatusReceived;
-        public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<Device>? DeviceInfoReceived;
         public event Action<bool>? ConnectionStatusChange;
 
 
@@ -82,6 +82,14 @@ namespace Seki.App.Services
             }
         }
 
+        public void SendBinary(byte[] message)
+        {
+            if (_isRunning)
+            {
+                _webSocketServer.MulticastBinary(message);
+            }
+        }
+
         public bool IsRunning => _isRunning;
 
         private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
@@ -89,7 +97,7 @@ namespace Seki.App.Services
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
-        private void OnDeviceInfoReceived(DeviceInfo deviceInfo)
+        private void OnDeviceInfoReceived(Device deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
@@ -105,7 +113,7 @@ namespace Seki.App.Services
     public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
         public event Action<DeviceStatus>? DeviceStatusReceived;
-        public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<Device>? DeviceInfoReceived;
         public event Action<bool>? ConnectionStatusChange;
 
         protected override TcpSession CreateSession() { return new SekiSession(this); }
@@ -128,7 +136,7 @@ namespace Seki.App.Services
         }
 
 
-        public void OnDeviceInfoReceived(DeviceInfo deviceInfo)
+        public void OnDeviceInfoReceived(Device deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
@@ -143,8 +151,6 @@ namespace Seki.App.Services
     public class SekiSession(SekiServer server) : WsSession(server)
     {
         private readonly SekiServer _server = server;
-        public FileTransferService _fileTransferService = new FileTransferService();
-
         private MdnsService? _mdnsService;
         public override void OnWsConnected(HttpRequest request)
         {
@@ -167,9 +173,9 @@ namespace Seki.App.Services
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
             string jsonMessage = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
-            System.Diagnostics.Debug.WriteLine("json message: " + jsonMessage);
             if (jsonMessage.StartsWith("{"))
             {
+                System.Diagnostics.Debug.WriteLine("json message: " + jsonMessage);
                 HandleJsonMessage(jsonMessage);
             }
             else
@@ -195,7 +201,7 @@ namespace Seki.App.Services
 
         private void HandleBinaryMessage(byte[] buffer, long offset, long size)
         {
-            _fileTransferService.ReceiveFileData(buffer, (int)offset, (int)size);
+            
         }
 
         public void SendMessage(object content)

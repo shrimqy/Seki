@@ -2,6 +2,7 @@
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -67,6 +68,11 @@ namespace Seki.App.Data.Models
         WEBSOCKET,
         P2P,
     }
+    public enum DataTransferType
+    {
+        CHUNK,
+        METADATA,
+    }
 
     public class SocketMessage
     {
@@ -100,17 +106,28 @@ namespace Seki.App.Data.Models
 
     public class NotificationMessage : SocketMessage
     {
+        [JsonPropertyName("notificationKey")]
+        public string NotificationKey { get; set; }
+
+        [JsonPropertyName("timeStamp")]
+        public string TimeStamp { get; set; }
+
+
+        [JsonIgnore]
+        public bool HasTimestamp => !string.IsNullOrEmpty(TimeStamp);
+
+
         [JsonPropertyName("notificationType")]
         public string NotificationType { get; set; }
 
         [JsonPropertyName("appName")]
-        public string AppName { get; set; }
+        public string? AppName { get; set; }
 
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [JsonPropertyName("text")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         [JsonPropertyName("messages")]
         public List<Message> Messages { get; set; }
@@ -122,58 +139,77 @@ namespace Seki.App.Data.Models
             {
                 var result = new List<GroupedMessage>();
                 var currentGroup = new GroupedMessage();
-
-                foreach (var message in Messages)
+                if (Messages != null)
                 {
-                    if (currentGroup.Sender != message.Sender)
+                    foreach (var message in Messages)
                     {
-                        if (currentGroup.Sender != null)
+                        if (currentGroup.Sender != message.Sender)
                         {
-                            result.Add(currentGroup);
+                            if (currentGroup.Sender != null)
+                            {
+                                result.Add(currentGroup);
+                            }
+                            currentGroup = new GroupedMessage
+                            {
+                                Sender = message.Sender,
+                                Messages = new List<string>()
+                            };
                         }
-                        currentGroup = new GroupedMessage
-                        {
-                            Sender = message.Sender,
-                            Messages = new List<string>()
-                        };
+                        currentGroup.Messages.Add(message.Text);
                     }
-                    currentGroup.Messages.Add(message.Text);
-                }
 
-                if (currentGroup.Sender != null)
-                {
-                    result.Add(currentGroup);
-                }
+                    if (currentGroup.Sender != null)
+                    {
+                        result.Add(currentGroup);
+                    }
 
-                return result;
+                    return result;
+                }
+                return null;
             }
         }
 
         [JsonIgnore]
         public bool HasGroupedMessages => GroupedMessages?.Count > 0;
 
+        [JsonIgnore]
+        public bool ShouldShowTitle
+        {
+            get
+            {
+                // Check if GroupedMessages is not empty and compare Title with the first Sender
+                if (GroupedMessages != null && GroupedMessages.Any())
+                {
+                    return !string.Equals(Title, GroupedMessages.First().Sender, StringComparison.OrdinalIgnoreCase);
+                }
+
+                // If no GroupedMessages or if it's empty, return true
+                return true;
+            }
+        }
+
         [JsonPropertyName("tag")]
-        public string Tag { get; set; }
+        public string? Tag { get; set; }
 
         [JsonPropertyName("groupKey")]
-        public string GroupKey { get; set; }
+        public string? GroupKey { get; set; }
 
         public List<NotificationAction> Actions { get; set; } = new List<NotificationAction>();
 
         [JsonPropertyName("appIcon")]
-        public string AppIcon { get; set; }
+        public string? AppIcon { get; set; }
 
         [JsonPropertyName("bigPicture")]
-        public string BigPicture { get; set; }
+        public string? BigPicture { get; set; }
 
         [JsonPropertyName("largeIcon")]
-        public string LargeIcon { get; set; }
+        public string? LargeIcon { get; set; }
 
         [JsonIgnore]
-        public string IconBase64 { get; set; }
+        public string? IconBase64 { get; set; }
 
         [JsonIgnore]
-        public BitmapImage Icon { get; set; }
+        public BitmapImage? Icon { get; set; }
     }
 
     public class GroupedMessage
@@ -230,10 +266,10 @@ namespace Seki.App.Data.Models
     public class PlaybackData : SocketMessage
     {
         [JsonPropertyName("appName")]
-        public string AppName { get; set; }
+        public string? AppName { get; set; }
 
         [JsonPropertyName("trackTitle")]
-        public string TrackTitle { get; set; }
+        public string? TrackTitle { get; set; }
 
         [JsonPropertyName("artist")]
         public string? Artist { get; set; }
@@ -242,7 +278,7 @@ namespace Seki.App.Data.Models
         public float Volume { get; set; }
 
         [JsonPropertyName("isPlaying")]
-        public bool IsPlaying { get; set; }
+        public bool? IsPlaying { get; set; }
 
         [JsonPropertyName("mediaAction")]
         public string? MediaAction { get; set; }
@@ -266,11 +302,14 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("transferType")]
         public required String TransferType { get; set; }
 
+        [JsonPropertyName("dataTransferType")]
+        public required String DataTransferType { get; set; }
+
         [JsonPropertyName("metadata")]
         public FileMetadata? Metadata { get; set; }
 
         [JsonPropertyName("chunkData")]
-        public string? chunkData { get; set; }
+        public string? ChunkData { get; set; }
 
         public FileTransfer()
         {
@@ -283,8 +322,8 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("fileName")]
         public required String FileName {  get; set; }
 
-        [JsonPropertyName("fileType")]
-        public required String FileType { get; set; }
+        [JsonPropertyName("mimeType")]
+        public required String MimeType { get; set; }
 
         [JsonPropertyName("fileSize")]
         public required long FileSize { get; set; }

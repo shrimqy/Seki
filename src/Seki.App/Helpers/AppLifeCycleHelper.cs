@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Seki.App.ViewModels;
+using Seki.App.ViewModels.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace Seki.App.Helpers
     { 
         internal static void CloseApp()
         {
+            
             MainWindow.Instance.Close();
         }
 
@@ -21,6 +23,8 @@ namespace Seki.App.Helpers
             return Host.CreateDefaultBuilder()
                 .ConfigureServices(services => services
                     .AddSingleton<MainPageViewModel>()
+                    .AddSingleton<GeneralViewModel>()
+                    .AddSingleton<DevicesViewModel>()
                 ).Build();
         }
     }

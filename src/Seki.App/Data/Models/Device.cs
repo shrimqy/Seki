@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Seki.App.Data.Models
 {
-    public class Devices
+    public class Device
     {
-        public required string Id { get; set; }
         public string? Name { get; set; }
         public DateTime? LastConnected { get; set; }
     }

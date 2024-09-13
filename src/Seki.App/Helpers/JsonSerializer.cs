@@ -35,33 +35,32 @@ namespace Seki.App.Helpers
                 return JsonSerializer.Deserialize<FileTransfer>(json, options)!;
             }
             if (jsonElement.TryGetProperty("type", out var typeElement) && typeElement.ValueKind == JsonValueKind.String)
+            {
+                string typeString = typeElement.GetString();
+                System.Diagnostics.Debug.WriteLine(typeString);
+                if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
                 {
-                    string typeString = typeElement.GetString();
-                    System.Diagnostics.Debug.WriteLine(typeString);
-                    if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
+                    switch (messageType)
                     {
-                        switch (messageType)
-                        {
-                            case SocketMessageType.Notification:
-                                return JsonSerializer.Deserialize<NotificationMessage>(json, options);
-                            case SocketMessageType.Clipboard:
-                                return JsonSerializer.Deserialize<ClipboardMessage>(json, options);
-                            case SocketMessageType.Response:
-                                return JsonSerializer.Deserialize<Response>(json, options);
-                            case SocketMessageType.DeviceInfo:
-                                SaveDeviceInfoAsync(json);
-                                return JsonSerializer.Deserialize<DeviceInfo>(json, options);
-                            case SocketMessageType.DeviceStatus:
-                                return JsonSerializer.Deserialize<DeviceStatus>(json, options);
-                            case SocketMessageType.PlaybackData:
-                                return JsonSerializer.Deserialize<PlaybackData>(json, options);
+                        case SocketMessageType.Notification:
+                            return JsonSerializer.Deserialize<NotificationMessage>(json, options);
+                        case SocketMessageType.Clipboard:
+                            return JsonSerializer.Deserialize<ClipboardMessage>(json, options);
+                        case SocketMessageType.Response:
+                            return JsonSerializer.Deserialize<Response>(json, options);
+                        case SocketMessageType.DeviceInfo:
+                            SaveDeviceInfoAsync(json);
+                            return JsonSerializer.Deserialize<DeviceInfo>(json, options);
+                        case SocketMessageType.DeviceStatus:
+                            return JsonSerializer.Deserialize<DeviceStatus>(json, options);
+                        case SocketMessageType.PlaybackData:
+                            return JsonSerializer.Deserialize<PlaybackData>(json, options);
                         case SocketMessageType.CommandType:
                             return JsonSerializer.Deserialize<Command>(json, options);
                         case SocketMessageType.FileTransferType:
                             return JsonSerializer.Deserialize<FileTransfer>(json, options);
-                            default:
-                                return JsonSerializer.Deserialize<SocketMessage>(json, options);
-                        }
+                        default:
+                            return JsonSerializer.Deserialize<SocketMessage>(json, options);
                     }
                 }
             }
