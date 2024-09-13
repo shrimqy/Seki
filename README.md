@@ -1,6 +1,7 @@
 <p align="center">
   <img alt="Files hero image" src="./.github/readme-images/ReadmeHero.png" />
 </p>
+
 # Seki
 
 **Seki** is a custom-built Windows app designed to enhance your workflow by enabling seamless clipboard and notification sharing between your Windows PC and Android device. It's an alternative to existing solutions, tailored for users who want a straightforward and efficient way to keep their devices in sync.
@@ -19,20 +20,23 @@
 
 <p align="left">
   <!-- Store Badge -->
-  <a style="text-decoration:none" href="https://apps.microsoft.com/detail/9PJV6D1JPG0H?launch=true&mode=full">
+  <a style="text-decoration:none" href="https://apps.microsoft.com/detail/9PJV6D1JPG0H?launch=true&mode=full" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: light)" srcset=".github/./readme-images/StoreBadge-dark.png" width="220" />
       <img src=".github/./readme-images/StoreBadge-light.png" width="220" />
-  </picture></a>
+    </picture>
+  </a>
 </p>
 
 ## How to Use
 
+1. **Download and Install the Android App**: (Sekia)[https://github.com/shrimqy/Sekia/releases/tag/v0.1]
+
 1. **Setting Up**:
-    - Permissions: Allow the app to post notifications, location access, and restricted access from App Info (after trying to grant the notification access), .
+    - Permissions: Allow the app to post notifications, location access, and notification access (Allow restricted access from App Info only after trying to grant notification access).
     - Ensure both your Android device and Windows PC are connected to the same network.
     - Launch the app on your Windows PC.
-    - Try to add a new device from the device card or device tab(Pull to refresh if it doesn't show any devices).
+    - Try to add a new device from the device card or device tab (Pull to refresh if it doesn't show any devices).
 
 2. **Clipboard Sharing**:
     - Copy content on the desktop and it will automatically sync with your android (That is if you have enabled it from the settings).
@@ -58,6 +62,3 @@
 - **Android**: Kotlin, Jetpack Compose
 - **Desktop**: [Seki](https://github.com/shrimqy/Seki) (WinUI 3, C#)
 - **Network**: Mdns, Websockets. 
-## License
-
-Sekia is licensed under the  GNU GENERAL PUBLIC LICENSE. See [LICENSE](https://github.com/shrimqy/Sekia/blob/master/LICENSE) for more details.
