@@ -24,7 +24,7 @@
         <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
         <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
         <AppxPackageDir>C:\Users\shrim\Documents\Outputs APp\</AppxPackageDir>
-        <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
+		<PublishDir>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\</PublishDir>
         <GenerateTestArtifacts>True</GenerateTestArtifacts>
         <AppxBundle>Auto</AppxBundle>
         <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>

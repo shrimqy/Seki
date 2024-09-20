@@ -3,25 +3,27 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
-  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+    xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
   xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10"
-  
-  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+ 
   IgnorableNamespaces="uap rescap uap3 uap2 iot uap4">
 
   <Identity
-    Name="690be19d-82e3-4871-96b7-d592ec464833"
-    Publisher="CN=shrimpy"
-    Version="0.1.0.0" />
+    Name="shrimqy.Seki-PhoneLink"
+    Publisher="CN=BEC0F2AA-07EB-4762-A2FE-13550AF289A5"
+    Version="0.2.1.0" />
 
-  <mp:PhoneIdentity PhoneProductId="690be19d-82e3-4871-96b7-d592ec464833" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="262eeefb-d6dc-45a8-a0ec-2a93a3b4833a" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Seki.App</DisplayName>
-    <PublisherDisplayName>shrim</PublisherDisplayName>
+    <DisplayName>Seki - Phone Link</DisplayName>
+    <PublisherDisplayName>shrimqy</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -46,6 +48,22 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.shareTarget">
+          <uap:ShareTarget>
+            <uap:SupportedFileTypes>
+              <uap:SupportsAnyFileType/>
+            </uap:SupportedFileTypes>
+			  <uap:DataFormat>StorageItems</uap:DataFormat>
+          </uap:ShareTarget>
+        </uap:Extension>
+		<uap5:Extension Category="windows.startupTask">
+			<uap5:StartupTask
+			TaskId="8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0"
+			Enabled="false"
+			DisplayName="Seki" />
+		 </uap5:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
