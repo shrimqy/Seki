@@ -41,10 +41,53 @@ namespace Seki.App
             AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
             AppWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
             AppWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            var theme = Application.Current.RequestedTheme;
+            string iconPath;
+
+            // Set icon path based on light/dark theme
+            if (theme == ApplicationTheme.Dark)
+            {
+                iconPath = "Assets/SekiDark.ico";
+            }
+            else
+            {
+                iconPath = "Assets/SekiLight.ico";
+            }
+
+            AppWindow.SetIcon(iconPath);
+
+            // Listen for theme changes
+            if (Content is FrameworkElement frameworkElement)
+            {
+                frameworkElement.ActualThemeChanged += OnThemeChanged;
+            }
 
             // Workaround for full screen window messing up the taskbar
             // https://github.com/microsoft/microsoft-ui-xaml/issues/8431
             //InteropHelpers.SetPropW(WindowHandle, "NonRudeHWND", new IntPtr(1));
+        }
+
+        private void OnThemeChanged(FrameworkElement sender, object args)
+        {
+            SetWindowIconBasedOnTheme();
+        }
+
+        private void SetWindowIconBasedOnTheme()
+        {
+            var theme = Application.Current.RequestedTheme;
+            string iconPath;
+
+            // Set icon path based on light/dark theme
+            if (theme == ApplicationTheme.Dark)
+            {
+                iconPath = "Assets/SekiDark.ico";
+            }
+            else
+            {
+                iconPath = "Assets/SekiLight.ico";
+            }
+
+            AppWindow.SetIcon(iconPath);
         }
 
         public void ShowSplashScreen()
