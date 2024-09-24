@@ -42,6 +42,10 @@ namespace Seki.App.Data.Models
         CommandType,
         [EnumMember(Value = "7")]
         FileTransferType,
+        [EnumMember(Value = "8")]
+        StorageInfo,
+        [EnumMember(Value = "9")]
+        DirectoryInfo,
     }
 
     public enum MediaAction
@@ -300,5 +304,24 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("uri")]
         public required String Uri { get; set; }
     }
+
+    public class StorageInfo : SocketMessage 
+    {
+        [JsonPropertyName("totalSpace")]
+        public long TotalSpace { get; set; }
+
+        [JsonPropertyName("freeSpace")]
+        public long FreeSpace { get; set; }
+
+        [JsonPropertyName("usedSpace")]
+        public long UsedSpace { get; set; }
+
+        public StorageInfo()
+        {
+            Type = SocketMessageType.StorageInfo;
+        }
+
+    }
+
 
 }

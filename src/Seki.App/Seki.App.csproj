@@ -50,6 +50,7 @@
   <ItemGroup>
     <None Remove="Assets\Inactive.ico" />
     <None Remove="Assets\Red.ico" />
+    <None Remove="Views\HomePage.xaml" />
     <None Remove="Views\MainPage.xaml" />
     <None Remove="Views\Sync\Sync.xaml" />
     <None Remove="Views\SystemTray\SystemTray.xaml" />

@@ -21,6 +21,7 @@ namespace Seki.App.Helpers
             return Host.CreateDefaultBuilder()
                 .ConfigureServices(services => services
                     .AddSingleton<MainPageViewModel>()
+                    .AddSingleton<HomeViewModel>()
                 ).Build();
         }
     }

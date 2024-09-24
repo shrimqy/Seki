@@ -41,11 +41,19 @@ namespace Seki.App.Utils
                 case SocketMessageType.FileTransferType:
                     HandleFileTransfer((FileTransfer)message, session);
                     break;
+                case SocketMessageType.StorageInfo:
+                    HandleStorageInfo((StorageInfo)message, session);
+                    break;
                 default:
                     System.Diagnostics.Debug.WriteLine($"Unknown message type: {message.Type}");
                     session.SendMessage(new Response { Content = "Unknown message type" });
                     break;
             }
+        }
+
+        private static void HandleStorageInfo(StorageInfo message, SekiSession session)
+        {
+            StorageInfoReceived?.Invoke(null, message);
         }
 
         private static async void HandleFileTransfer(FileTransfer message, SekiSession session)
