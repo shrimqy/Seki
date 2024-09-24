@@ -20,7 +20,7 @@ namespace Seki.App.Utils
                     // Get user properties
                     var properties = await currentUser.GetPropertiesAsync(new string[] { "FirstName", "DisplayName", "AccountName" });
 
-                    string firstName = null;
+                    string? firstName = null;
 
                     // Try to get FirstName directly
                     if (properties.ContainsKey("FirstName") && properties["FirstName"] is string firstNameProperty)
@@ -41,7 +41,7 @@ namespace Seki.App.Utils
                     // Get user avatar
                     var picture = await currentUser.GetPictureAsync(Windows.System.UserPictureSize.Size1080x1080);
                     var stream = await picture.OpenReadAsync();
-                    string avatarBase64 = null;
+                    string? avatarBase64 = null;
 
                     if (stream != null)
                     {
@@ -59,7 +59,7 @@ namespace Seki.App.Utils
             }
             catch (Exception ex)
             {
-                //System.Diagnostics.Debug.WriteLine($"Error getting user info: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error getting user info: {ex.Message}");
             }
 
             // Fallback to first part of Environment.UserName if everything else fails

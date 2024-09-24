@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	
-    <PropertyGroup>
+	<PropertyGroup>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
 		<OutputType>WinExe</OutputType>
@@ -10,35 +9,55 @@
 		<UseWinUI>true</UseWinUI>
 		<RootNamespace>Seki.App</RootNamespace>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-		<Platforms>x86;x64;ARM64</Platforms>
-		<Configurations>Debug;Release;Sideload</Configurations>
-        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
-        <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-	    <Nullable>enable</Nullable>
+		<Platforms>x86;x64;arm64</Platforms>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<PublishReadyToRun>false</PublishReadyToRun>
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+		<Configurations>Debug;Release;Sideload;Store</Configurations>
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+		<Nullable>enable</Nullable>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <EnableMsixTooling>true</EnableMsixTooling>
-        <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
-        <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-        <PackageCertificateKeyFile>Seki.App_TemporaryKey.pfx</PackageCertificateKeyFile>
-        <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-        <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
-        <AppxPackageDir>C:\Users\shrim\Documents\Outputs APp\</AppxPackageDir>
-		<PublishDir>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\</PublishDir>
-        <GenerateTestArtifacts>True</GenerateTestArtifacts>
-        <AppxBundle>Auto</AppxBundle>
-        <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
-        <AppInstallerUri>C:\Users\shrim\Documents\Outputs APp</AppInstallerUri>
-        <HoursBetweenUpdateChecks>168</HoursBetweenUpdateChecks>
-  </PropertyGroup>
-	
+		<EnableMsixTooling>true</EnableMsixTooling>
+		<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+		<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+		<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+		<AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+		<AppxPackageDir>C:\Users\shrim\Documents\Outputs APp\</AppxPackageDir>
+		<AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
+		<GenerateTestArtifacts>True</GenerateTestArtifacts>
+		<AppxBundle>Always</AppxBundle>
+		<AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
+		<AppInstallerUri>C:\Users\shrim\Documents\Outputs APp</AppInstallerUri>
+		<HoursBetweenUpdateChecks>168</HoursBetweenUpdateChecks>
+		<GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
+		<UserSecretsId>35ee7fcf-5150-4ffd-a762-9630aa1fb8d8</UserSecretsId>
+		<PackageCertificateKeyFile>Seki.App_TemporaryKey.pfx</PackageCertificateKeyFile>
+	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
 		<DefineConstants>TRACE;DEBUG;NETFX_CORE;DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)' != 'Debug'">
 		<DefineConstants>TRACE;RELEASE;NETFX_CORE;DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 		<Optimize>true</Optimize>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)'=='x86'">
+		<PlatformTarget>x86</PlatformTarget>
+		<RuntimeIdentifier>win-x86</RuntimeIdentifier>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)'=='x64'">
+		<PlatformTarget>x64</PlatformTarget>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)'=='arm64'">
+		<PlatformTarget>arm64</PlatformTarget>
+		<RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+	</PropertyGroup>
+	
 	
   <ItemGroup>
     <Compile Remove="GlobalUsing.cs" />
@@ -81,7 +100,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.8" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240802000" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="2.0.9" />
     <PackageReference Include="NetCoreServer" Version="8.0.7" />
@@ -124,6 +143,41 @@
     <Content Update="Assets\SplashScreen.scale-400.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\CastWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\StoragePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\HomePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Settings\AboutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Settings\DevicesPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Settings\GeneralPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\TrayIconView.xaml">
