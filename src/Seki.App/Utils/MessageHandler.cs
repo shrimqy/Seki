@@ -50,7 +50,7 @@ namespace Seki.App.Utils
 
         private static async void HandleFileTransfer(FileTransfer message, SekiSession session)
         {
-            session._fileTransferService.HandleFileTransfer(message);
+            await FileTransferService.Instance.HandleFileTransfer(message);
         }
 
         private static async void HandleCommandMessage(Command message)

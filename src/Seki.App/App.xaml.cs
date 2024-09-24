@@ -36,6 +36,9 @@ namespace Seki.App
         private WebSocketService? _webSocketService;
         private PlaybackService? _playbackService;
         private MdnsService? _mdnsService;
+
+        public FileTransferService _fileTransferService = new FileTransferService();
+
         public static ClipboardService ClipboardService => ClipboardService.Instance;
         public App()
         {
@@ -51,6 +54,15 @@ namespace Seki.App
             {
                 // Get AppActivationArgumentsTask
                 var activatedEventArgs = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
+                System.Diagnostics.Debug.WriteLine(activatedEventArgs);
+                // Handle share activation
+                var kind = activatedEventArgs.Kind;
+                if (kind == ExtendedActivationKind.ShareTarget)
+                {
+                    System.Diagnostics.Debug.WriteLine("Share Target Received");
+                    HandleShareTargetActivation(activatedEventArgs.Data as ShareTargetActivatedEventArgs);
+                }
+
                 var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
 
                 // Manage startup task and minimize if necessary
@@ -113,6 +125,17 @@ namespace Seki.App
         }
         }
 
+        public async Task HandleShareTargetActivation(ShareTargetActivatedEventArgs args)
+        {
+            System.Diagnostics.Debug.WriteLine("Share Target Received");
+            var shareOperation = args.ShareOperation;
+
+
+            await MainWindow.Instance.DispatcherQueue.EnqueueAsync(async () =>
+            {
+                await _fileTransferService.ProcessShareAsync(shareOperation);
+            });
+        }
 
         private void EnsureWindowIsInitialized()
         {

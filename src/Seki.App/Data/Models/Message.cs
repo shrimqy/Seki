@@ -67,6 +67,11 @@ namespace Seki.App.Data.Models
         WEBSOCKET,
         P2P,
     }
+    public enum DataTransferType
+    {
+        CHUNK,
+        METADATA,
+    }
 
     public class SocketMessage
     {
@@ -266,11 +271,14 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("transferType")]
         public required String TransferType { get; set; }
 
+        [JsonPropertyName("dataTransferType")]
+        public required String DataTransferType { get; set; }
+
         [JsonPropertyName("metadata")]
         public FileMetadata? Metadata { get; set; }
 
-        [JsonPropertyName("data")]
-        public ByteArrayContent? Data { get; set; }
+        [JsonPropertyName("chunkData")]
+        public string? ChunkData { get; set; }
 
         public FileTransfer()
         {
@@ -283,8 +291,8 @@ namespace Seki.App.Data.Models
         [JsonPropertyName("fileName")]
         public required String FileName {  get; set; }
 
-        [JsonPropertyName("fileType")]
-        public required String FileType { get; set; }
+        [JsonPropertyName("mimeType")]
+        public required String MimeType { get; set; }
 
         [JsonPropertyName("fileSize")]
         public required long FileSize { get; set; }
