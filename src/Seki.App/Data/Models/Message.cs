@@ -1,7 +1,9 @@
-﻿using Microsoft.UI.Xaml.Media.Imaging;
+﻿using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -46,6 +48,26 @@ namespace Seki.App.Data.Models
         StorageInfo,
         [EnumMember(Value = "9")]
         DirectoryInfo,
+        [EnumMember(Value = "10")]
+        ScreenData,
+        [EnumMember(Value ="11")]
+        InteractiveControlMessage
+    }
+
+    public enum InteractiveControlType
+    {
+        [EnumMember(Value ="SINGLE")]
+        SingleTapEvent,
+        [EnumMember(Value = "HOLD")]
+        HoldTapEvent,
+        [EnumMember(Value = "SWIPE")]
+        SwipeEvent,
+        [EnumMember(Value = "KEYBOARD")]
+        KeyboardEvent,
+        [EnumMember(Value = "SCROLL")]
+        ScrollEvent,
+        [EnumMember(Value = "KEY")]
+        KeyEvent,
     }
 
     public enum MediaAction
@@ -63,6 +85,8 @@ namespace Seki.App.Data.Models
         SHUTDOWN,
         SLEEP,
         HIBERNATE,
+        MIRROR,
+        CLOSE_MIRROR,
         CLEAR_NOTIFICATIONS
     }
 
@@ -145,30 +169,30 @@ namespace Seki.App.Data.Models
                 var currentGroup = new GroupedMessage();
                 if (Messages != null)
                 {
-                foreach (var message in Messages)
-                {
-                    if (currentGroup.Sender != message.Sender)
+                    foreach (var message in Messages)
                     {
-                        if (currentGroup.Sender != null)
+                        if (currentGroup.Sender != message.Sender)
                         {
-                            result.Add(currentGroup);
+                            if (currentGroup.Sender != null)
+                            {
+                                result.Add(currentGroup);
+                            }
+                            currentGroup = new GroupedMessage
+                            {
+                                Sender = message.Sender,
+                                Messages = new List<string>()
+                            };
                         }
-                        currentGroup = new GroupedMessage
-                        {
-                            Sender = message.Sender,
-                            Messages = new List<string>()
-                        };
+                        currentGroup.Messages.Add(message.Text);
                     }
-                    currentGroup.Messages.Add(message.Text);
-                }
 
-                if (currentGroup.Sender != null)
-                {
-                    result.Add(currentGroup);
-                }
+                    if (currentGroup.Sender != null)
+                    {
+                        result.Add(currentGroup);
+                    }
 
-                return result;
-            }
+                    return result;
+                }
                 return null;
             }
         }
@@ -302,7 +326,7 @@ namespace Seki.App.Data.Models
         public Command()
         {
             Type = SocketMessageType.CommandType;
-    }
+        }
     }
 
 
@@ -360,4 +384,117 @@ namespace Seki.App.Data.Models
     }
 
 
+    public class ScreenData : SocketMessage
+    {
+        [JsonPropertyName("timestamp")]
+        public long TimeStamp { get; set; }
+
+    }
+
+    public class InteractiveControlMessage : SocketMessage
+    {
+        [JsonPropertyName("control")]
+        public InteractiveControl Control { get; set; }
+
+        public InteractiveControlMessage()
+        {
+            Type = SocketMessageType.InteractiveControlMessage;
+        }
+    }
+
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(SingleTapEvent), typeDiscriminator: "SINGLE")]
+    [JsonDerivedType(typeof(HoldTapEvent), typeDiscriminator: "HOLD")]
+    [JsonDerivedType(typeof(KeyboardAction), typeDiscriminator: "KEYBOARD")]
+    [JsonDerivedType(typeof(KeyEvent), typeDiscriminator: "KEY")]
+    [JsonDerivedType(typeof(ScrollEvent), typeDiscriminator: "SCROLL")]
+    [JsonDerivedType(typeof(SwipeEvent), typeDiscriminator: "SWIPE")]
+    public abstract class InteractiveControl
+    {
+    }
+
+    public class SingleTapEvent : InteractiveControl
+    {
+        [JsonPropertyName("x")]
+        public double X { get; set; }
+
+        [JsonPropertyName("y")]
+        public double Y { get; set; }
+
+        [JsonPropertyName("frameWidth")]
+        public double FrameWidth { get; set; }
+
+        [JsonPropertyName("frameHeight")]
+        public double FrameHeight { get; set; }
+    }
+
+    public class HoldTapEvent : InteractiveControl
+    {
+        [JsonPropertyName("x")]
+        public double X { get; set; }
+
+        [JsonPropertyName("y")]
+        public double Y { get; set; }
+
+        [JsonPropertyName("frameWidth")]
+        public double FrameWidth { get; set; }
+
+        [JsonPropertyName("frameHeight")]
+        public double FrameHeight { get; set; }
+    }
+
+    public class KeyboardAction : InteractiveControl
+    {
+        [JsonPropertyName("action")]
+        public required string KeyboardActionType { get; set; }
+    }
+
+    public class KeyEvent : InteractiveControl
+    {
+        [JsonPropertyName("key")]
+        public required string Key { get; set; }
+    }
+
+    public class SwipeEvent : InteractiveControl
+    {
+        [JsonPropertyName("startX")]
+        public double StartX { get; set; }
+
+        [JsonPropertyName("startY")]
+        public double StartY { get; set; }
+
+        [JsonPropertyName("willContinue")]
+        public bool WillContinue { get; set; }
+
+        [JsonPropertyName("endX")]
+        public double EndX { get; set; }
+
+        [JsonPropertyName("endY")]
+        public double EndY { get; set; }
+
+        [JsonPropertyName("frameWidth")]
+        public double FrameWidth { get; set; }
+
+        [JsonPropertyName("frameHeight")]
+        public double FrameHeight { get; set; }
+
+        [JsonPropertyName("duration")]
+        public double Duration { get; set; }
+    }
+
+    public class ScrollEvent : InteractiveControl
+    {
+        [JsonPropertyName("direction")]
+        public required string ScrollDirection { get; set; }
+    }
+
+    public enum ScrollDirection
+    {
+        UP, DOWN
+    }
+
+    public enum KeyboardActionType
+    {
+        Tab, Backspace, Enter, Escape, CtrlC, CtrlV, CtrlX, CtrlA, CtrlZ, CtrlY, Shift
+    }
 }

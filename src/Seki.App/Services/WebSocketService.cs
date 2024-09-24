@@ -83,6 +83,14 @@ namespace Seki.App.Services
             }
         }
 
+        public void SendBinary(byte[] message)
+        {
+            if (_isRunning)
+            {
+                _webSocketServer.MulticastBinary(message);
+            }
+        }
+
         public bool IsRunning => _isRunning;
 
         private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
@@ -109,7 +117,7 @@ namespace Seki.App.Services
         private SekiSession? _activeSession;
 
         public event Action<DeviceStatus>? DeviceStatusReceived;
-        public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<Device>? DeviceInfoReceived;
         public event Action<bool>? ConnectionStatusChange;
 
         protected override TcpSession CreateSession()
@@ -167,8 +175,6 @@ namespace Seki.App.Services
     public class SekiSession(SekiServer server) : WsSession(server)
     {
         private readonly SekiServer _server = server;
-        public FileTransferService _fileTransferService = new FileTransferService();
-
         private MdnsService? _mdnsService;
         public override void OnWsConnected(HttpRequest request)
         {
@@ -271,7 +277,12 @@ namespace Seki.App.Services
 
         private void HandleBinaryMessage(byte[] buffer, long offset, long size)
         {
-            _fileTransferService.ReceiveFileData(buffer, (int)offset, (int)size);
+            // Extract binary data
+            byte[] screenData = new byte[size];
+            Array.Copy(buffer, offset, screenData, 0, size);
+
+            // Trigger the ScreenDataReceived event
+            MessageHandler.HandleBinaryData(screenData);
         }
 
         public void SendMessage(object content)

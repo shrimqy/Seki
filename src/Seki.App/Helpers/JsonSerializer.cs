@@ -12,7 +12,7 @@ namespace Seki.App.Helpers
         private static JsonSerializerOptions options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         public static string Serialize(object message)
@@ -28,40 +28,36 @@ namespace Seki.App.Helpers
         public static SocketMessage DeserializeMessage(string json)
         {
             var jsonElement = JsonSerializer.Deserialize<JsonElement>(json, options);
-
-            if (jsonElement.TryGetProperty("transferType", out _))
-            {
-                System.Diagnostics.Debug.WriteLine("serialized FileTransfer");
-                return JsonSerializer.Deserialize<FileTransfer>(json, options)!;
-            }
             if (jsonElement.TryGetProperty("type", out var typeElement) && typeElement.ValueKind == JsonValueKind.String)
+            {
+                string typeString = typeElement.GetString();
+                if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
                 {
-                    string typeString = typeElement.GetString();
-                    System.Diagnostics.Debug.WriteLine(typeString);
-                    if (Enum.TryParse<SocketMessageType>(typeString, out var messageType))
+                    switch (messageType)
                     {
-                        switch (messageType)
-                        {
-                            case SocketMessageType.Notification:
-                                return JsonSerializer.Deserialize<NotificationMessage>(json, options);
-                            case SocketMessageType.Clipboard:
-                                return JsonSerializer.Deserialize<ClipboardMessage>(json, options);
-                            case SocketMessageType.Response:
-                                return JsonSerializer.Deserialize<Response>(json, options);
-                            case SocketMessageType.DeviceInfo:
-                                SaveDeviceInfoAsync(json);
-                                return JsonSerializer.Deserialize<DeviceInfo>(json, options);
-                            case SocketMessageType.DeviceStatus:
-                                return JsonSerializer.Deserialize<DeviceStatus>(json, options);
-                            case SocketMessageType.PlaybackData:
-                                return JsonSerializer.Deserialize<PlaybackData>(json, options);
+                        case SocketMessageType.Notification:
+                            return JsonSerializer.Deserialize<NotificationMessage>(json, options);
+                        case SocketMessageType.Clipboard:
+                            return JsonSerializer.Deserialize<ClipboardMessage>(json, options);
+                        case SocketMessageType.Response:
+                            return JsonSerializer.Deserialize<Response>(json, options);
+                        case SocketMessageType.DeviceInfo:
+                            SaveDeviceInfoAsync(json);
+                            return JsonSerializer.Deserialize<DeviceInfo>(json, options);
+                        case SocketMessageType.DeviceStatus:
+                            return JsonSerializer.Deserialize<DeviceStatus>(json, options);
+                        case SocketMessageType.PlaybackData:
+                            return JsonSerializer.Deserialize<PlaybackData>(json, options);
                         case SocketMessageType.CommandType:
                             return JsonSerializer.Deserialize<Command>(json, options);
                         case SocketMessageType.FileTransferType:
                             return JsonSerializer.Deserialize<FileTransfer>(json, options);
-                            default:
-                                return JsonSerializer.Deserialize<SocketMessage>(json, options);
-                        }
+                        case SocketMessageType.StorageInfo:
+                            return JsonSerializer.Deserialize<StorageInfo>(json, options);
+                        case SocketMessageType.ScreenData:
+                            return JsonSerializer.Deserialize<ScreenData>(json, options);
+                        default:
+                            return JsonSerializer.Deserialize<SocketMessage>(json, options);
                     }
                 }
             }

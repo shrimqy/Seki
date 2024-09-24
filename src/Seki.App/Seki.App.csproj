@@ -50,6 +50,7 @@
   <ItemGroup>
     <None Remove="Assets\Inactive.ico" />
     <None Remove="Assets\Red.ico" />
+    <None Remove="Views\CastWindow.xaml" />
     <None Remove="Views\HomePage.xaml" />
     <None Remove="Views\MainPage.xaml" />
     <None Remove="Views\Settings\AboutPage.xaml" />
