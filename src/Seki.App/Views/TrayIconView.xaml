@@ -13,8 +13,8 @@
     <UserControl.Resources>
         <converters:BoolToImageSourceConverter
             x:Key="BoolToImageSourceConverter"
-            FalseImage="ms-appx:///Assets/Sekia.ico"
-            TrueImage="ms-appx:///Assets/Sekia.ico" />
+            FalseImage="ms-appx:///Assets/SekiDark.ico"
+            TrueImage="ms-appx:///Assets/SekiDark.ico" />
     </UserControl.Resources>
     <tb:TaskbarIcon
         x:Name="TrayIcon"
@@ -23,7 +23,7 @@
         IconSource="{x:Bind IsWindowVisible, Converter={StaticResource BoolToImageSourceConverter}}"
         LeftClickCommand="{x:Bind ShowHideWindowCommand}"
         NoLeftClickDelay="True"
-        ToolTipText="Sekia">
+        ToolTipText="Seki">
         <tb:TaskbarIcon.ContextFlyout>
             <MenuFlyout AreOpenCloseAnimationsEnabled="False">
                 <MenuFlyoutItem Command="{x:Bind ShowHideWindowCommand}" Text="Show/Hide Window" />
