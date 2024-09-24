@@ -1,6 +1,8 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using Seki.App.Views;
@@ -12,7 +14,6 @@ namespace Seki.App
 {
     public sealed partial class MainWindow : WindowEx
     {
-
         private static MainWindow? _Instance;
         public static MainWindow Instance => _Instance ??= new();
 
@@ -37,7 +38,6 @@ namespace Seki.App
             MinWidth = 516;
 
             AppWindow.Title = "Seki";
-            AppWindow.SetIcon("ms-appx:///Assets/logo-winui.png");
             AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
             AppWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
             AppWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;

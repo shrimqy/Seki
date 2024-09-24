@@ -30,7 +30,6 @@ namespace Seki.App
         public static bool HandleClosedEvents { get; set; } = true;
         public static TaskCompletionSource<bool>? SplashScreenLoadingTCS { get; private set; }
 
-
         public new static App Current
              => (App)Application.Current;
         private WebSocketService? _webSocketService;
@@ -65,8 +64,6 @@ namespace Seki.App
 
                 var isStartupTask = activatedEventArgs.Data is Windows.ApplicationModel.Activation.IStartupTaskActivatedEventArgs;
 
-                // Manage startup task and minimize if necessary
-                await HandleStartupTaskAsync(isStartupTask);
 
                 // Hook events for the window
                 EnsureWindowIsInitialized();
@@ -74,11 +71,12 @@ namespace Seki.App
                 // Only activate if not already open
                 if (!MainWindow.Instance.AppWindow.IsVisible)
                 {
-                MainWindow.Instance.Activate();
+                    MainWindow.Instance.Activate();
                 }
 
                 // Wait for the Window to fully initialize
                 await Task.Delay(10);
+
 
                 _ = ClipboardService;
 
@@ -90,39 +88,35 @@ namespace Seki.App
                 //MainWindow.Instance.Closed += Window_Closed;
                 MainWindow.Instance.Activated += Window_Activated;
 
-            // Configure the DI container
-            var host = AppLifeCycleHelper.ConfigureHost();
-            Ioc.Default.ConfigureServices(host.Services);
+                // Configure the DI container
+                var host = AppLifeCycleHelper.ConfigureHost();
+                Ioc.Default.ConfigureServices(host.Services);
 
-            _mdnsService = new MdnsService();
-            await _mdnsService.AdvertiseServiceAsync();
+                _mdnsService = new MdnsService();
+                await _mdnsService.AdvertiseServiceAsync();
 
-            _webSocketService = WebSocketService.Instance;
-            _webSocketService.Start();
+                _webSocketService = WebSocketService.Instance;
+                _webSocketService.Start();
 
-            _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
+                _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
 
-            await InitializePlaybackServiceAsync();
+                await InitializePlaybackServiceAsync();
 
-            ClipboardService.ClipboardContentChanged += OnClipboardContentChanged;
+                ClipboardService.ClipboardContentChanged += OnClipboardContentChanged;
 
                 
-            var hasSavedDevices = await CheckForSavedDevicesAsync();
-            if (hasSavedDevices != null)
-            {
+                var hasSavedDevices = await CheckForSavedDevicesAsync();
                 // Initialize the main application after splash screen completes
                 _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+
+                System.Diagnostics.Debug.WriteLine("await for task started");
+                await SplashScreenLoadingTCS.Task;
+                if (SplashScreenLoadingTCS.Task.Result)
+                {
+                    System.Diagnostics.Debug.WriteLine("inside if of result");
+                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+                }
             }
-            System.Diagnostics.Debug.WriteLine("await for task started");
-            await SplashScreenLoadingTCS.Task;
-            if (SplashScreenLoadingTCS.Task.Result)
-            {
-                System.Diagnostics.Debug.WriteLine("inside if of result");
-                _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
-            }
-            // Hook events for the window
-            EnsureWindowIsInitialized();
-        }
         }
 
         public async Task HandleShareTargetActivation(ShareTargetActivatedEventArgs args)
@@ -148,8 +142,6 @@ namespace Seki.App
                     MainWindow.Instance.AppWindow.Hide();
                 }
             };
-            MainWindow.Instance.Activated += Window_Activated;
-            MainWindow.Instance.Closed += Window_Closed;
         }
 
         /// <summary>
@@ -158,7 +150,6 @@ namespace Seki.App
         public async Task OnActivatedAsync(AppActivationArguments activatedEventArgs)
         {
             var activatedEventArgsData = activatedEventArgs.Data;
-            // Called from Program class
 
             // InitializeApplication accesses UI, needs to be called on UI thread
             await MainWindow.Instance.DispatcherQueue.EnqueueAsync(()
@@ -188,7 +179,7 @@ namespace Seki.App
                 // If there's no setting, set it to false by default (do not start at startup)
                 ApplicationData.Current.LocalSettings.Values["Startup"] = false;
                 await HandleStartupTaskAsync(false);
-        }
+            }
         }
 
         private static async Task HandleStartupTaskAsync(bool isStartupTask)
@@ -197,12 +188,12 @@ namespace Seki.App
             if (isStartupTask)
             {
                 StartupTask startupTask = await StartupTask.GetAsync("8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0");
-            // Ensure the startup task is enabled
-            if (startupTask.State == StartupTaskState.DisabledByUser || startupTask.State == StartupTaskState.Disabled)
-            {
-                await startupTask.RequestEnableAsync();
+                // Ensure the startup task is enabled
+                if (startupTask.State == StartupTaskState.DisabledByUser || startupTask.State == StartupTaskState.Disabled)
+                {
+                    await startupTask.RequestEnableAsync();
+                }
             }
-        }
         }
 
         private async Task InitializePlaybackServiceAsync()
@@ -236,7 +227,7 @@ namespace Seki.App
             _webSocketService?.SendMessage(jsonMessage);
         }
 
-        private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        private void OnDeviceInfoReceived(Device? deviceInfo)
         {
             if (SplashScreenLoadingTCS?.Task.IsCompleted == false || SplashScreenLoadingTCS?.Task == null)
             {
@@ -248,6 +239,15 @@ namespace Seki.App
 
         private void OnClipboardContentChanged(object? sender, string? content)
         {
+
+            // Check if ClipboardSync is enabled in local settings
+            var isClipboardSyncEnabled = (bool?)ApplicationData.Current.LocalSettings.Values["ClipboardSync"] ?? false;
+            if (!isClipboardSyncEnabled)
+            {
+                System.Diagnostics.Debug.WriteLine("ClipboardSync is disabled.");
+                return; // Do not proceed if ClipboardSync is disabled
+            }
+
             System.Diagnostics.Debug.WriteLine("Clipboard triggered");
             if (content != null && _webSocketService != null)
             {
@@ -258,21 +258,51 @@ namespace Seki.App
                 };
                 System.Diagnostics.Debug.WriteLine("clipboard: " + clipboardMessage.Content);
                 string jsonMessage = SocketMessageSerializer.Serialize(clipboardMessage);
+                System.Diagnostics.Debug.WriteLine(jsonMessage);
                 _webSocketService.SendMessage(jsonMessage);
             }
         }
 
-        private static async Task<DeviceInfo?> CheckForSavedDevicesAsync()
+        private static async Task<List<Device>?> CheckForSavedDevicesAsync()
         {
             try
             {
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
                 StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
-                string json = await FileIO.ReadTextAsync(deviceInfoFile);
-                return JsonSerializer.Deserialize<DeviceInfo>(json, options);
+
+                // Read the file's contents
+                string jsonData = await FileIO.ReadTextAsync(deviceInfoFile);
+
+                // Deserialize the JSON into a List<Devices>
+                if (!string.IsNullOrWhiteSpace(jsonData))
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        WriteIndented = true
+                    };
+
+                    var deviceList = JsonSerializer.Deserialize<List<Device>>(jsonData, options);
+                    return deviceList ?? new List<Device>();  // Return the list or an empty list if null
+                }
+
+                return null; // Return null if the file is empty
             }
             catch (FileNotFoundException)
             {
+                System.Diagnostics.Debug.WriteLine($"File Not Found");
+                return null; // Return null if the file does not exist
+            }
+            catch (JsonException ex)
+            {
+                // Log or handle the deserialization error
+                System.Diagnostics.Debug.WriteLine($"App, Error deserializing device info: {ex.Message}");
+                return null; // Return null if there is a deserialization error
+            }
+            catch (Exception ex)
+            {
+                // Catch any other exceptions
+                System.Diagnostics.Debug.WriteLine($"Unexpected error: {ex.Message}");
                 return null;
             }
         }

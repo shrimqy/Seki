@@ -323,9 +323,6 @@ namespace Seki.App.Services
                 case MediaAction.PREV_QUEUE:
                     await session.TrySkipPreviousAsync();
                     break;
-                case MediaAction.VOLUME:
-                    VolumeControl.ChangeVolumeToMinLevel(message.Volume);
-                    break;
                 default:
                     System.Diagnostics.Debug.WriteLine($"Unknown action: {action}");
                     break;

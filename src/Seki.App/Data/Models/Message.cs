@@ -63,6 +63,7 @@ namespace Seki.App.Data.Models
         SHUTDOWN,
         SLEEP,
         HIBERNATE,
+        CLEAR_NOTIFICATIONS
     }
 
     public enum FileTransferType
@@ -109,17 +110,28 @@ namespace Seki.App.Data.Models
 
     public class NotificationMessage : SocketMessage
     {
+        [JsonPropertyName("notificationKey")]
+        public string NotificationKey { get; set; }
+
+        [JsonPropertyName("timestamp")]
+        public string TimeStamp { get; set; }
+
+
+        [JsonIgnore]
+        public bool HasTimestamp => !string.IsNullOrEmpty(TimeStamp);
+
+
         [JsonPropertyName("notificationType")]
         public string NotificationType { get; set; }
 
         [JsonPropertyName("appName")]
-        public string AppName { get; set; }
+        public string? AppName { get; set; }
 
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [JsonPropertyName("text")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         [JsonPropertyName("messages")]
         public List<Message> Messages { get; set; }
@@ -131,7 +143,8 @@ namespace Seki.App.Data.Models
             {
                 var result = new List<GroupedMessage>();
                 var currentGroup = new GroupedMessage();
-
+                if (Messages != null)
+                {
                 foreach (var message in Messages)
                 {
                     if (currentGroup.Sender != message.Sender)
@@ -156,33 +169,51 @@ namespace Seki.App.Data.Models
 
                 return result;
             }
+                return null;
+            }
         }
 
         [JsonIgnore]
         public bool HasGroupedMessages => GroupedMessages?.Count > 0;
 
+        [JsonIgnore]
+        public bool ShouldShowTitle
+        {
+            get
+            {
+                // Check if GroupedMessages is not empty and compare Title with the first Sender
+                if (GroupedMessages != null && GroupedMessages.Any())
+                {
+                    return !string.Equals(Title, GroupedMessages.First().Sender, StringComparison.OrdinalIgnoreCase);
+                }
+
+                // If no GroupedMessages or if it's empty, return true
+                return true;
+            }
+        }
+
         [JsonPropertyName("tag")]
-        public string Tag { get; set; }
+        public string? Tag { get; set; }
 
         [JsonPropertyName("groupKey")]
-        public string GroupKey { get; set; }
+        public string? GroupKey { get; set; }
 
         public List<NotificationAction> Actions { get; set; } = new List<NotificationAction>();
 
         [JsonPropertyName("appIcon")]
-        public string AppIcon { get; set; }
+        public string? AppIcon { get; set; }
 
         [JsonPropertyName("bigPicture")]
-        public string BigPicture { get; set; }
+        public string? BigPicture { get; set; }
 
         [JsonPropertyName("largeIcon")]
-        public string LargeIcon { get; set; }
+        public string? LargeIcon { get; set; }
 
         [JsonIgnore]
-        public string IconBase64 { get; set; }
+        public string? IconBase64 { get; set; }
 
         [JsonIgnore]
-        public BitmapImage Icon { get; set; }
+        public BitmapImage? Icon { get; set; }
     }
 
     public class GroupedMessage
@@ -239,10 +270,10 @@ namespace Seki.App.Data.Models
     public class PlaybackData : SocketMessage
     {
         [JsonPropertyName("appName")]
-        public string AppName { get; set; }
+        public string? AppName { get; set; }
 
         [JsonPropertyName("trackTitle")]
-        public string TrackTitle { get; set; }
+        public string? TrackTitle { get; set; }
 
         [JsonPropertyName("artist")]
         public string? Artist { get; set; }
@@ -251,7 +282,7 @@ namespace Seki.App.Data.Models
         public float Volume { get; set; }
 
         [JsonPropertyName("isPlaying")]
-        public bool IsPlaying { get; set; }
+        public bool? IsPlaying { get; set; }
 
         [JsonPropertyName("mediaAction")]
         public string? MediaAction { get; set; }
@@ -267,6 +298,11 @@ namespace Seki.App.Data.Models
     {
         [JsonPropertyName("commandType")]
         public required String CommandType { get; set; }
+
+        public Command()
+        {
+            Type = SocketMessageType.CommandType;
+    }
     }
 
 

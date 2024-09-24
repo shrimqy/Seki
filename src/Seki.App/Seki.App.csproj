@@ -52,6 +52,10 @@
     <None Remove="Assets\Red.ico" />
     <None Remove="Views\HomePage.xaml" />
     <None Remove="Views\MainPage.xaml" />
+    <None Remove="Views\Settings\AboutPage.xaml" />
+    <None Remove="Views\Settings\DevicesPage.xaml" />
+    <None Remove="Views\Settings\GeneralPage.xaml" />
+    <None Remove="Views\StoragePage.xaml" />
     <None Remove="Views\Sync\Sync.xaml" />
     <None Remove="Views\SystemTray\SystemTray.xaml" />
     <None Remove="Views\TrayIconView.xaml" />

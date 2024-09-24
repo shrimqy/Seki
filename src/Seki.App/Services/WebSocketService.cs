@@ -24,10 +24,11 @@ namespace Seki.App.Services
     {
         private static WebSocketService? _instance;
         private SekiServer _webSocketServer;
+
         private bool _isRunning;
 
         public event Action<DeviceStatus>? DeviceStatusReceived;
-        public event Action<DeviceInfo>? DeviceInfoReceived;
+        public event Action<Device>? DeviceInfoReceived;
         public event Action<bool>? ConnectionStatusChange;
 
 
@@ -89,7 +90,7 @@ namespace Seki.App.Services
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
-        private void OnDeviceInfoReceived(DeviceInfo deviceInfo)
+        private void OnDeviceInfoReceived(Device deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
@@ -104,11 +105,25 @@ namespace Seki.App.Services
 
     public class SekiServer(IPAddress address, int port) : WsServer(address, port)
     {
+
+        private SekiSession? _activeSession;
+
         public event Action<DeviceStatus>? DeviceStatusReceived;
         public event Action<DeviceInfo>? DeviceInfoReceived;
         public event Action<bool>? ConnectionStatusChange;
 
-        protected override TcpSession CreateSession() { return new SekiSession(this); }
+        protected override TcpSession CreateSession()
+        {
+            if (_activeSession != null)
+            {
+                // If there's an active session, close it
+                _activeSession.Close();
+            }
+            _activeSession = new SekiSession(this);
+            return _activeSession;
+        }
+
+
 
         protected override void OnStarted()
         {
@@ -122,13 +137,22 @@ namespace Seki.App.Services
             OnConnectionStatusChange(false);
         }
 
+        public void SessionDisconnected(SekiSession session)
+        {
+            if (_activeSession == session)
+            {
+                _activeSession = null;
+            }
+        }
+
+
         public void OnDeviceStatusReceived(DeviceStatus deviceStatus)
         {
             DeviceStatusReceived?.Invoke(deviceStatus);
         }
 
 
-        public void OnDeviceInfoReceived(DeviceInfo deviceInfo)
+        public void OnDeviceInfoReceived(Device deviceInfo)
         {
             DeviceInfoReceived?.Invoke(deviceInfo);
         }
@@ -157,26 +181,76 @@ namespace Seki.App.Services
 
         public override void OnWsDisconnected()
         {
+            base.OnWsDisconnected();
+            _server.SessionDisconnected(this);
             _mdnsService = new MdnsService();
             _ = _mdnsService.AdvertiseServiceAsync();
             System.Diagnostics.Debug.WriteLine($"WebSocket session with Id {Id} disconnected!");
             _server.OnConnectionStatusChange(false);
         }
 
+        public override void OnWsError(string error)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error: {error}");
+            base.OnWsError(error);
+        }
+
+
+        private DateTime lastMessageTime;
 
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
+            //var currentTime = DateTime.Now;
+
+            //// Measure time since the last message
+            //if (lastMessageTime != default)
+            //{
+            //    var timeDifference = currentTime - lastMessageTime;
+            //    System.Diagnostics.Debug.WriteLine($"Time between messages: {timeDifference.TotalMilliseconds} ms");
+            //}
+
+            //lastMessageTime = currentTime; // Update the last message time
+
+            // Decode the message
             string jsonMessage = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
-            System.Diagnostics.Debug.WriteLine("json message: " + jsonMessage);
-            if (jsonMessage.StartsWith("{"))
+
+            // Validate the message to check if it's valid JSON
+            if (IsValidJson(jsonMessage))
             {
                 HandleJsonMessage(jsonMessage);
             }
             else
             {
-                // This is binary data (file content)
-                HandleBinaryMessage(buffer, offset, size);
+                if (size > 0)
+                {
+                    HandleBinaryMessage(buffer, offset, size);  // Ensure this method processes binary data
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Received empty data.");
+                }
             }
+        }
+
+        // Helper method to check if a string is valid JSON
+        private bool IsValidJson(string jsonString)
+        {
+            jsonString = jsonString.Trim();
+            if ((jsonString.StartsWith("{") && jsonString.EndsWith("}")) || // object
+                (jsonString.StartsWith("[") && jsonString.EndsWith("]"))) // array
+            {
+                try
+                {
+                    JsonDocument.Parse(jsonString);
+                    return true;
+                }
+                catch (JsonException)
+                {
+                    // Invalid JSON
+                    return false;
+                }
+            }
+            return false;
         }
 
         private void HandleJsonMessage(string jsonMessage)
@@ -192,6 +266,8 @@ namespace Seki.App.Services
                 SendMessage(new Response { Content = "Invalid message format: " + ex.Message });
             }
         }
+
+
 
         private void HandleBinaryMessage(byte[] buffer, long offset, long size)
         {

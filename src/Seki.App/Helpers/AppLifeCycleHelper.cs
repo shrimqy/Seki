@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Seki.App.ViewModels;
+using Seki.App.ViewModels.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace Seki.App.Helpers
                 .ConfigureServices(services => services
                     .AddSingleton<MainPageViewModel>()
                     .AddSingleton<HomeViewModel>()
+                    .AddSingleton<GeneralViewModel>()
+                    .AddSingleton<DevicesViewModel>()
                 ).Build();
         }
     }

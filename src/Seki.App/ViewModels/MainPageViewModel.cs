@@ -2,10 +2,12 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Seki.App.Data.Models;
+using Seki.App.Helpers;
 using Seki.App.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -14,18 +16,19 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.UI.Notifications;
 
 namespace Seki.App.ViewModels
 {
     public sealed class MainPageViewModel : ObservableObject
     {
         private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcher;
-        private DeviceInfo _deviceInfo = new();
+        private Device _deviceInfo = new();
         private DeviceStatus _deviceStatus = new();
         private bool _connectionStatus = false;
         private ObservableCollection<NotificationMessage> _recentNotifications = [];
         
-        public DeviceInfo DeviceInfo
+        public Device DeviceInfo
         {
             get => _deviceInfo;
             set => SetProperty(ref _deviceInfo, value);
@@ -53,6 +56,9 @@ namespace Seki.App.ViewModels
 
         public ICommand ToggleConnectionCommand { get; }
 
+        // Command to clear notifications
+        public ICommand ClearAllNotificationsCommand { get; }
+
         public ObservableCollection<NotificationMessage> RecentNotifications
         {
             get => _recentNotifications;
@@ -68,6 +74,19 @@ namespace Seki.App.ViewModels
             _ = LoadDeviceInfoAsync();
 
             ToggleConnectionCommand = new RelayCommand(ToggleConnection);
+
+            // Initialize the ClearAllNotificationsCommand
+            ClearAllNotificationsCommand = new RelayCommand(ClearAllNotifications);
+        }
+
+        private void ClearAllNotifications()
+        {
+            // Clear the notifications list
+            RecentNotifications.Clear();
+            var command = new Command
+            { CommandType = nameof(CommandType.CLEAR_NOTIFICATIONS) };
+            string jsonMessage = SocketMessageSerializer.Serialize(command);
+            WebSocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void ToggleConnection()
@@ -82,7 +101,7 @@ namespace Seki.App.ViewModels
             System.Diagnostics.Debug.WriteLine($"connection status changed");
 
             // If the connection is re-established (changing from false to true)
-            if (!_connectionStatus && connectionStatus)
+            if (!_connectionStatus && connectionStatus || connectionStatus)
             {
                 _dispatcher.TryEnqueue(() => RecentNotifications.Clear()); // Clear recent notifications
             }
@@ -99,7 +118,7 @@ namespace Seki.App.ViewModels
             _dispatcher.TryEnqueue(() => DeviceStatus = deviceStatus);
         }
 
-        private void OnDeviceInfoReceived(DeviceInfo? deviceInfo)
+        private void OnDeviceInfoReceived(Device? deviceInfo)
         {
             if (deviceInfo != null)
             {
@@ -107,17 +126,63 @@ namespace Seki.App.ViewModels
             }
         }
 
+        public void RemoveNotification(string notificationKey)
+        {
+            var notificationToRemove = RecentNotifications.FirstOrDefault(n => n.NotificationKey == notificationKey);
 
 
-        private void OnNotificationReceived(object? sender, NotificationMessage notification)
+
+            if (notificationToRemove != null)
+            {
+                notificationToRemove.NotificationType = "REMOVED";
+                string jsonMessage = SocketMessageSerializer.Serialize(notificationToRemove);
+                WebSocketService.Instance.SendMessage(jsonMessage);
+                RecentNotifications.Remove(notificationToRemove);
+                System.Diagnostics.Debug.WriteLine($"Removed notification from RecentNotifications: {notificationToRemove.NotificationKey}");
+            }
+
+            
+        }
+
+        private void OnNotificationReceived(object? sender, NotificationMessage? notification)
         {
             _dispatcher.TryEnqueue(async () =>
             {
-                if (notification.Icon == null && !string.IsNullOrEmpty(notification.IconBase64))
+                if (notification == null) return;
+                var existingNotification = RecentNotifications.FirstOrDefault(n => n.NotificationKey == notification.NotificationKey);
+
+                if (notification.NotificationType == "REMOVED")
                 {
-                    notification.Icon = await Base64ToBitmapImage(notification.IconBase64);
+                    // Find and remove the notification from the RecentNotifications list
+                    if (existingNotification != null)
+                    {
+                        RecentNotifications.Remove(existingNotification);
+                        System.Diagnostics.Debug.WriteLine($"Removed notification from RecentNotifications: {notification.NotificationKey}");
+                    }
                 }
-                RecentNotifications.Insert(0, notification);
+                else
+                {
+                    // Handle adding new notifications
+                    if (notification.Icon == null && !string.IsNullOrEmpty(notification.IconBase64))
+                    {
+                        notification.Icon = await Base64ToBitmapImage(notification.IconBase64);
+                    }
+                    if (existingNotification != null)
+                    {
+                        RecentNotifications.Remove(existingNotification);
+                    }
+                    RecentNotifications.Insert(0, notification);
+
+                    // Sort the notifications by timestamp (descending)
+                    var sortedNotifications = RecentNotifications.OrderByDescending(n => n.TimeStamp).ToList();
+
+                    // Replace the collection with the sorted one
+                    RecentNotifications.Clear();
+                    foreach (var sortedNotification in sortedNotifications)
+                    {
+                        RecentNotifications.Add(sortedNotification);
+                    }
+                }
             });
         }
 
@@ -142,18 +207,58 @@ namespace Seki.App.ViewModels
             NotificationService.NotificationReceived -= OnNotificationReceived;
         }
 
+        private static async Task<List<Device>?> CheckForSavedDevicesAsync()
+        {
+            try
+            {
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
+
+                // Read the file's contents
+                string json = await FileIO.ReadTextAsync(deviceInfoFile);
+
+                // Deserialize the JSON into a List<Devices>
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        WriteIndented = true
+                    };
+
+                    var deviceList = JsonSerializer.Deserialize<List<Device>>(json, options);
+                    return deviceList ?? [];  // Return the list or an empty list if null
+                }
+
+                return null; // Return null if the file is empty
+            }
+            catch (FileNotFoundException)
+            {
+                return null; // Return null if the file does not exist
+            }
+            catch (JsonException ex)
+            {
+                // Log or handle the deserialization error
+                System.Diagnostics.Debug.WriteLine($"Main Page, Error deserializing device info: {ex.Message}");
+                return null; // Return null if there is a deserialization error
+            }
+            catch (Exception ex)
+            {
+                // Catch any other exceptions
+                System.Diagnostics.Debug.WriteLine($"Unexpected error: {ex.Message}");
+                return null;
+            }
+        }
+
         private async Task LoadDeviceInfoAsync()
         {
             var localFolder = ApplicationData.Current.LocalFolder;
-            var deviceInfoFile = await localFolder.TryGetItemAsync("deviceInfo.json") as StorageFile;
-            if (deviceInfoFile != null)
+            List<Device>? devices = await CheckForSavedDevicesAsync();
+            if (devices != null && devices.Any())
             {
-                string json = await FileIO.ReadTextAsync(deviceInfoFile);
-                var loadedDeviceInfo = JsonSerializer.Deserialize<DeviceInfo>(json);
-                if (loadedDeviceInfo != null)
-                {
-                    DeviceInfo = loadedDeviceInfo;
-                }
+                // Find the last connected device
+                var lastConnected = devices.OrderByDescending(d => d.LastConnected).FirstOrDefault();
+                DeviceInfo = lastConnected;
             }
         }
     }

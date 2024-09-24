@@ -29,7 +29,7 @@ namespace Seki.App.Services
                 ClipboardContentChanged?.Invoke(this, text);
             }
         }
-        public async Task SetContentAsync(string content)
+        public Task SetContentAsync(string content)
         {
             _dispatcherQueue.TryEnqueue(() =>
             {
@@ -46,6 +46,7 @@ namespace Seki.App.Services
                     throw; // Rethrow the exception to let the caller handle it
                 }
             });
+            return Task.CompletedTask;
         }
     }
 }
