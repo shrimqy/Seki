@@ -11,11 +11,14 @@
 - **Media Control**: Control media playback and volume of your PC from android. 
 - **File Sharing**: Share files between your devices easily.
 - **Notification**: Allows toasting the notifications from your android in desktop.
+- **Remote Control**: Control your phone from pc.
 
 ## Limitations
 
 - **Clipboard Sharing on Android 13+**:
     - Due to Android's restrictions, clipboard sharing is only possible via the share sheet after Android 13.
+- **Remote Control**:
+   - Keyboard input works optimally on android 13+
 ## Installation
 
 <p align="left">
@@ -43,6 +46,8 @@
     - To share clipboard from android you will have to manually sent it through the share sheet that shows after you perform a copy action).
 3. **File Transfer**:
     - Use the share sheet from android/windows and select the app to share any files between the devices. 
+4. **Remote Control**:
+   - Click the button next to the connection status button which will give a prompt to cast on your phone, choose the entire screen.
 
 
 ## Screenshots
@@ -55,10 +60,9 @@
 
 - Notification Actions.
 - Exploring Device Files.
-- Screen Casting
 
 ## Tech Stack
 
-- **Android**: Kotlin, Jetpack Compose
-- **Desktop**: [Seki](https://github.com/shrimqy/Seki) (WinUI 3, C#)
+- **Android**: (Sekia)[https://github.com/shrimqy/Sekia] Kotlin, Jetpack Compose
+- **Desktop**: WinUI 3, C#
 - **Network**: Mdns, Websockets. 
