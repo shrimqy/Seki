@@ -41,7 +41,7 @@
                     <TextBlock
                         FontSize="14"
                         Foreground="Gray"
-                        Text="Version: 0.2.1" />
+                        Text="Version: 0.3.0" />
                 </StackPanel>
             </Grid>
         </Border>

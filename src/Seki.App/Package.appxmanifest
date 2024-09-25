@@ -17,7 +17,7 @@
   <Identity
     Name="shrimqy.Seki-PhoneLink"
     Publisher="CN=BEC0F2AA-07EB-4762-A2FE-13550AF289A5"
-    Version="0.2.1.0" />
+    Version="0.3.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="262eeefb-d6dc-45a8-a0ec-2a93a3b4833a" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
