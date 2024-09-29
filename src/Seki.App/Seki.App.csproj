@@ -43,6 +43,15 @@
         <PackageReference Include="NetCoreServer" Version="8.0.7" />
         <PackageReference Include="WinUIEx" Version="2.3.4" />
     </ItemGroup>
+	
+    <ItemGroup>
+      <Content Update="Assets\Icons\SekiDark.ico">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Update="Assets\Icons\SekiLight.ico">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
 
     <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>

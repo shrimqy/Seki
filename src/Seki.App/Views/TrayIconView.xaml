@@ -11,7 +11,10 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <converters:BoolToImageSourceConverter x:Key="BoolToImageSourceConverter" />
+        <converters:BoolToImageSourceConverter
+            x:Key="BoolToImageSourceConverter"
+            FalseImage="ms-appx:///Assets/Icons/SekiDark.ico"
+            TrueImage="ms-appx:///Assets/Icons/SekiDark.ico" />
     </UserControl.Resources>
     <tb:TaskbarIcon
         x:Name="TrayIcon"

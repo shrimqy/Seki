@@ -33,7 +33,7 @@ namespace Seki.App.Utils
                     HandleResponseMessage((Response)message);
                     break;
                 case SocketMessageType.DeviceInfo:
-                    HandleDeviceInfoMessage((DeviceInfo)message, session);
+                    _ = HandleDeviceInfoMessage((DeviceInfo)message, session);
                     break;
                 case SocketMessageType.DeviceStatus:
                     HandleDeviceStatusMessage((DeviceStatus)message, session);
@@ -112,12 +112,12 @@ namespace Seki.App.Utils
 
         private static void HandleResponseMessage(Response message)
         {
-            System.Diagnostics.Debug.WriteLine($"Received response: {message.ResType}, {message.Content}");
+            Debug.WriteLine($"Received response: {message.ResType}, {message.Content}");
         }
 
         private static async Task HandleDeviceInfoMessage(DeviceInfo message, SekiSession session)
         {
-            System.Diagnostics.Debug.WriteLine($"Received device info: {message.DeviceName}");
+            Debug.WriteLine($"Received device info: {message.DeviceName}");
 
             var currentUserInfo = new CurrentUserInformation();
             var (username, avatar) = await currentUserInfo.GetCurrentUserInfoAsync();
@@ -136,9 +136,6 @@ namespace Seki.App.Utils
                 Name = message.DeviceName,
                 LastConnected = DateTime.Now,
             };
-
-            ((SekiServer)session.Server).OnDeviceInfoReceived(windowsDeviceInfo);
-
             // Load the existing devices from the file
             var localFolder = ApplicationData.Current.LocalFolder;
             var deviceInfoFile = await localFolder.TryGetItemAsync("deviceInfo.json") as StorageFile;
@@ -149,42 +146,50 @@ namespace Seki.App.Utils
                 WriteIndented = true
             };
 
-            List<Device> deviceList = new List<Device>();
+            List<Device> deviceList = [];
 
             if (deviceInfoFile != null)
             {
                 // Read and deserialize the existing device info JSON file
                 string json = await FileIO.ReadTextAsync(deviceInfoFile);
 
-                // If the JSON is not empty, deserialize it to a List<Device>
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     try
                     {
-                        deviceList = JsonSerializer.Deserialize<List<Device>>(json, options) ?? new List<Device>();
+                        // Deserialize as a single object if the received data is for a single device
+                        var receivedDevice = JsonSerializer.Deserialize<Device>(json, options);
+
+                        // Then add or update the device in the list
+                        if (receivedDevice != null)
+                        {
+                            // Check if the device already exists in the list
+                            var existingDevice = deviceList.FirstOrDefault(d => d.Name == receivedDevice.Name);
+
+                            if (existingDevice != null)
+                            {
+                                // Update the existing device information
+                                existingDevice.LastConnected = DateTime.Now;
+                                System.Diagnostics.Debug.WriteLine($"Updated device info for: {existingDevice.Name}");
+                            }
+                            else
+                            {
+                                // Add the new device if it doesn't exist
+                                deviceList.Add(receivedDevice);
+                                System.Diagnostics.Debug.WriteLine($"Added new device info for: {receivedDevice.Name}");
+                            }
+                        }
                     }
                     catch (JsonException ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Message Handler, Error deserializing device info: {ex.Message}");
-                        // Handle the deserialization error (e.g., fallback to an empty list)
+                        // Handle the deserialization error (fallback to empty list, if needed)
                     }
                 }
             }
-
-            // Check if a device with the same name already exists in the list
-            var existingDevice = deviceList.FirstOrDefault(d => d.Name == message.DeviceName);
-
-            if (existingDevice != null)
-            {
-                // Update the existing device information
-                existingDevice.LastConnected = DateTime.Now;
-                System.Diagnostics.Debug.WriteLine($"Updated device info for: {existingDevice.Name}");
-            }
             else
             {
-                // Add the new device information if it doesn't exist
-                deviceList.Add(windowsDeviceInfo);
-                System.Diagnostics.Debug.WriteLine($"Added new device info for: {windowsDeviceInfo.Name}");
+                System.Diagnostics.Debug.WriteLine("deviceInfo.json not found. Initializing a new device list.");
             }
 
             // Serialize the updated list back to JSON
@@ -193,6 +198,7 @@ namespace Seki.App.Utils
             // Save the updated JSON to the file
             StorageFile saveFile = deviceInfoFile ?? await localFolder.CreateFileAsync("deviceInfo.json", CreationCollisionOption.ReplaceExisting);
             await FileIO.WriteTextAsync(saveFile, updatedJson);
+            ((SekiServer)session.Server).OnDeviceInfoReceived(windowsDeviceInfo);
 
             System.Diagnostics.Debug.WriteLine($"Device info saved successfully.");
         }

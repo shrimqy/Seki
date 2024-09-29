@@ -63,7 +63,10 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <Content Include="Assets\AppTiles\**" />
+    <Content Include="Assets\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Icons\SekiLight.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Seki.App\Seki.App.csproj">
