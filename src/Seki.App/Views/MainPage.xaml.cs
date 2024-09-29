@@ -60,7 +60,7 @@ namespace Seki.App.Views
         private void OnDownloadButtonClick(TeachingTip sender, object args)
         {
             // Open the Android app download link
-            var uri = new Uri("https://github.com/shrimqy/Sekia");
+            var uri = new Uri("https://github.com/shrimqy/Seki");
             var success = Windows.System.Launcher.LaunchUriAsync(uri);
         }
 

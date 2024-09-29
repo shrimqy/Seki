@@ -310,13 +310,13 @@
             x:Name="FirstTimeTeachingTip"
             Title="Welcome to Seki!"
             ActionButtonClick="OnDownloadButtonClick"
-            ActionButtonContent="Download"
+            ActionButtonContent="Open"
             CloseButtonContent="Close"
             Closed="OnTeachingTipClosed"
             IsOpen="False"
-            Subtitle="Download the Android app to get started.">
+            Subtitle="Visit the Github page to to get started.">
             <TeachingTip.IconSource>
-                <SymbolIconSource Symbol="Download" />
+                <SymbolIconSource Symbol="Globe" />
             </TeachingTip.IconSource>
         </TeachingTip>
 
