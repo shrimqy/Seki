@@ -22,13 +22,21 @@ namespace Seki.App.Services
 
         private async void OnClipboardContentChanged(object? sender, object? e)
         {
-            var dataPackageView = Clipboard.GetContent();
-            if (dataPackageView.Contains(StandardDataFormats.Text))
+            try
             {
-                string text = await dataPackageView.GetTextAsync();
-                ClipboardContentChanged?.Invoke(this, text);
+                var dataPackageView = Clipboard.GetContent();
+                if (dataPackageView.Contains(StandardDataFormats.Text))
+                {
+                    string text = await dataPackageView.GetTextAsync();
+                    ClipboardContentChanged?.Invoke(this, text);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting clipboard content: {ex}");
             }
         }
+
         public Task SetContentAsync(string content)
         {
             _dispatcherQueue.TryEnqueue(() =>
