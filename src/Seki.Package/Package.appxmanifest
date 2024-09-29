@@ -8,13 +8,13 @@
   IgnorableNamespaces="uap rescap uap3">
 
   <Identity
-    Name="4d475b75-9d3b-431a-a907-d80d3608d4a5"
-    Publisher="CN=shrim"
-    Version="1.0.0.0" />
+    Name="shrimqy.Seki-PhoneLink"
+    Publisher="CN=BEC0F2AA-07EB-4762-A2FE-13550AF289A5"
+    Version="0.3.1.0" />
 
   <Properties>
-    <DisplayName>Seki.Package</DisplayName>
-    <PublisherDisplayName>shrim</PublisherDisplayName>
+    <DisplayName>Seki - Phone Sync</DisplayName>
+    <PublisherDisplayName>shrimqy</PublisherDisplayName>
     <Logo>Assets\AppTiles\StoreLogo.png</Logo>
   </Properties>
 
@@ -33,7 +33,7 @@
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
         DisplayName="Seki"
-        Description="Seki.Package"
+        Description="Connect and sync with your android devices."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\AppTiles\Square150x150Logo.png"
         Square44x44Logo="Assets\AppTiles\Square44x44Logo.png">
