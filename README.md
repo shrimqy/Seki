@@ -19,7 +19,9 @@
     - Due to Android's restrictions, clipboard sharing is only possible via the share sheet after Android 13.
 - **Remote Control**:
    - Keyboard input works optimally on android 13+
-
+- **FTP**
+   - File transfer could be corrupted at times, will be fixed soon. 
+  
 ## Installation
 
 Since the app has been temporarily removed from the Windows Store, please use the [drive](https://drive.google.com/drive/u/4/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G) to download and install it.
@@ -52,7 +54,6 @@ Since the app has been temporarily removed from the Windows Store, please use th
     - Use the share sheet from android/windows and select the app to share any files between the devices. 
 4. **Remote Control**:
    - Click the button next to the connection status button which will give a prompt to cast on your phone, choose the entire screen.
-
 
 ## Screenshots
 
