@@ -36,7 +36,7 @@
 
 ## How to Use
 
-1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/) (Make sure the version you're download is the same as the windows version)
+1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/) (Make sure the version you're downloading is the same as the windows version)
 
 1. **Setting Up**:
     - Permissions: Allow the app to post notifications, location access, and notification access (Allow restricted access from App Info only after trying to grant notification access).
