@@ -40,7 +40,7 @@
                 Margin="10,1,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                Source="ms-appx:///Assets/StoreLogo.png" />
+                Source="ms-appx:///Assets/AppTiles/StoreLogo.png" />
             <TextBlock
                 x:Name="TitleBarTextBlock"
                 Grid.Column="1"

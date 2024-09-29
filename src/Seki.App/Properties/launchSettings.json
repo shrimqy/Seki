@@ -1,9 +1,7 @@
 {
   "profiles": {
     "Seki.App (Package)": {
-      "commandName": "MsixPackage",
-      "alwaysReinstallApp": false,
-      "allowLocalNetworkLoopbackProperty": true
+      "commandName": "MsixPackage"
     },
     "Seki.App (Unpackaged)": {
       "commandName": "Project"

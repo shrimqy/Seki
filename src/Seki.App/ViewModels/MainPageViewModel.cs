@@ -234,6 +234,7 @@ namespace Seki.App.ViewModels
             }
             catch (FileNotFoundException)
             {
+                System.Diagnostics.Debug.WriteLine($"File Not Found, DeviceInfo.json");
                 return null; // Return null if the file does not exist
             }
             catch (JsonException ex)

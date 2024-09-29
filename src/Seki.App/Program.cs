@@ -18,6 +18,9 @@ namespace Seki.App
         [STAThread]
         public static void Main()
         {
+            // Initialize the global System.Runtime.InteropServices.ComWrappers instance to use for WinRT
+            WinRT.ComWrappersSupport.InitializeComWrappers();
+
             // Get current process
             var proc = System.Diagnostics.Process.GetCurrentProcess();
 
@@ -52,11 +55,11 @@ namespace Seki.App
             // Start WinUI
             Application.Start((p) =>
             {
-                var context = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
-                SynchronizationContext.SetSynchronizationContext(context);
+                    var context = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
+                    SynchronizationContext.SetSynchronizationContext(context);
 
-                // Initialize FluentHub.App.App class
-                _ = new App();
+                    // Initialize FluentHub.App.App class
+                    _ = new App();
             });
         }
 

@@ -58,48 +58,59 @@ namespace Seki.App.ViewModels.Settings
         {
             try
             {
+                // Get the local folder where the app stores its data
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
 
-                if (deviceInfoFile != null)
+                // Check if the file exists first to avoid FileNotFoundException
+                IStorageItem deviceInfoFileItem = await localFolder.TryGetItemAsync("deviceInfo.json");
+
+                if (deviceInfoFileItem == null)
                 {
-                    string json = await FileIO.ReadTextAsync(deviceInfoFile);
-                    if (!string.IsNullOrWhiteSpace(json))
+                    // File does not exist, no need to proceed further
+                    System.Diagnostics.Debug.WriteLine("Device info file not found. This is expected if no devices have been added yet.");
+                    return;
+                }
+
+                // Cast the found item to a StorageFile
+                StorageFile deviceInfoFile = (StorageFile)deviceInfoFileItem;
+
+                // Read the file content as text
+                string json = await FileIO.ReadTextAsync(deviceInfoFile);
+
+                // Check if the file contains data
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var options = new JsonSerializerOptions
                     {
-                        var options = new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true,
-                            WriteIndented = true
-                        };
+                        PropertyNameCaseInsensitive = true,
+                        WriteIndented = true
+                    };
 
-                        List<Device>? deviceList;
-                        try
-                        {
-                            deviceList = JsonSerializer.Deserialize<List<Device>>(json, options);
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"File Not Found");
-                            deviceList = null;
-                        }
-                        catch (JsonException ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Devices ViewModel, Error deserializing device info: {ex.Message}");
-                            deviceList = new List<Device>();
-                        }
+                    // Attempt to deserialize the JSON into a list of Device objects
+                    List<Device>? deviceList = null;
+                    try
+                    {
+                        deviceList = JsonSerializer.Deserialize<List<Device>>(json, options);
+                    }
+                    catch (JsonException ex)
+                    {
+                        // Handle JSON parsing errors
+                        System.Diagnostics.Debug.WriteLine($"Devices ViewModel, Error deserializing device info: {ex.Message}");
+                    }
 
-                        if (deviceList != null)
+                    // If deserialization is successful, add devices to the connected list
+                    if (deviceList != null)
+                    {
+                        foreach (var device in deviceList)
                         {
-                            foreach (var device in deviceList)
-                            {
-                                ConnectedDevices.Add(device);
-                            }
+                            ConnectedDevices.Add(device);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
+                // Catch any unexpected errors
                 System.Diagnostics.Debug.WriteLine($"Error loading device info: {ex.Message}");
             }
         }

@@ -19,7 +19,11 @@
     - Due to Android's restrictions, clipboard sharing is only possible via the share sheet after Android 13.
 - **Remote Control**:
    - Keyboard input works optimally on android 13+
+
 ## Installation
+
+Since the app has been temporarily removed from the Windows Store, please use the [drive](https://drive.google.com/drive/u/4/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G) to download and install it.
+
 
 <p align="left">
   <!-- Store Badge -->
@@ -33,7 +37,7 @@
 
 ## How to Use
 
-1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/tag/v0.1)
+1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/)
 
 1. **Setting Up**:
     - Permissions: Allow the app to post notifications, location access, and notification access (Allow restricted access from App Info only after trying to grant notification access).
@@ -63,6 +67,7 @@
 
 ## Tech Stack
 
-- **Android**: (Sekia)[https://github.com/shrimqy/Sekia] Kotlin, Jetpack Compose
+- **Android**: [Sekia](https://github.com/shrimqy/Sekia) Kotlin, Jetpack Compose
 - **Desktop**: WinUI 3, C#
-- **Network**: Mdns, Websockets. 
+- **Network**: [Mdns](https://github.com/meamod/MeaMod.DNS), [Websockets](https://github.com/chronoxor/NetCoreServer). 
+

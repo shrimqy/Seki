@@ -1,26 +1,12 @@
-﻿using Seki.App.Extensions;
-using CommunityToolkit.WinUI;
+﻿using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
-using Seki.App.Services;
-using System.Threading;
-using System.Threading.Tasks;
-using Windows.Storage;
-using System;
 using Seki.App.Data.Models;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.IO;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using Seki.App.Helpers;
-using System.Linq;
+using Seki.App.Services;
 using Windows.ApplicationModel;
-using Microsoft.Extensions.Logging;
 using Windows.ApplicationModel.Activation;
-using Windows.ApplicationModel.DataTransfer.ShareTarget;
-using Windows.ApplicationModel.DataTransfer;
-using Microsoft.UI.Windowing;
-using Seki.App.Views;
+using Windows.Storage;
 
 namespace Seki.App
 {
@@ -265,46 +251,34 @@ namespace Seki.App
 
         private static async Task<List<Device>?> CheckForSavedDevicesAsync()
         {
-            try
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            var deviceInfoFile = await localFolder.TryGetItemAsync("deviceInfo.json") as StorageFile;
+
+            // Check if the file exists
+            if (deviceInfoFile == null)
             {
-                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
+                // Create the file with default content
+                deviceInfoFile = await localFolder.CreateFileAsync("deviceInfo.json", CreationCollisionOption.OpenIfExists);
+                await FileIO.WriteTextAsync(deviceInfoFile, "[]"); // Initialize with an empty JSON array
+            }
 
-                // Read the file's contents
-                string jsonData = await FileIO.ReadTextAsync(deviceInfoFile);
+            // Read the file's contents
+            string jsonData = await FileIO.ReadTextAsync(deviceInfoFile);
 
-                // Deserialize the JSON into a List<Devices>
-                if (!string.IsNullOrWhiteSpace(jsonData))
+            // Deserialize the JSON into a List<Device>
+            if (!string.IsNullOrWhiteSpace(jsonData))
+            {
+                var options = new JsonSerializerOptions
                 {
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true,
-                        WriteIndented = true
-                    };
+                    PropertyNameCaseInsensitive = true,
+                    WriteIndented = true
+                };
 
-                    var deviceList = JsonSerializer.Deserialize<List<Device>>(jsonData, options);
-                    return deviceList ?? new List<Device>();  // Return the list or an empty list if null
-                }
+                var deviceList = JsonSerializer.Deserialize<List<Device>>(jsonData, options);
+                return deviceList ?? new List<Device>(); // Return the list or an empty list if null
+            }
 
-                return null; // Return null if the file is empty
-            }
-            catch (FileNotFoundException)
-            {
-                System.Diagnostics.Debug.WriteLine($"File Not Found");
-                return null; // Return null if the file does not exist
-            }
-            catch (JsonException ex)
-            {
-                // Log or handle the deserialization error
-                System.Diagnostics.Debug.WriteLine($"App, Error deserializing device info: {ex.Message}");
-                return null; // Return null if there is a deserialization error
-            }
-            catch (Exception ex)
-            {
-                // Catch any other exceptions
-                System.Diagnostics.Debug.WriteLine($"Unexpected error: {ex.Message}");
-                return null;
-            }
+            return new List<Device>(); // Return an empty list if jsonData is empty or null
         }
     }
 
