@@ -24,9 +24,6 @@
   
 ## Installation
 
-Since the app has been temporarily removed from the Windows Store, please use the [drive](https://drive.google.com/drive/u/4/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G) to download and install it.
-
-
 <p align="left">
   <!-- Store Badge -->
   <a style="text-decoration:none" href="https://apps.microsoft.com/detail/9PJV6D1JPG0H?launch=true&mode=full" target="_blank" rel="noopener noreferrer">
@@ -39,7 +36,7 @@ Since the app has been temporarily removed from the Windows Store, please use th
 
 ## How to Use
 
-1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/)
+1. **Download and Install the Android App**: [Sekia](https://github.com/shrimqy/Sekia/releases/) (Make sure the version you're download is the same as the windows version)
 
 1. **Setting Up**:
     - Permissions: Allow the app to post notifications, location access, and notification access (Allow restricted access from App Info only after trying to grant notification access).
