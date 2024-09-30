@@ -24,6 +24,8 @@
   
 ## Installation
 
+As the Store version is still outdated (v0.2.1), I suggest waiting for the updated version to be published or if you really want to try it you can do so by going this [drive](https://drive.google.com/drive/u/4/folders/1DcjlZteJkj067erkfgd9pWoFBM9Icb_G) link.
+
 <p align="left">
   <!-- Store Badge -->
   <a style="text-decoration:none" href="https://apps.microsoft.com/detail/9PJV6D1JPG0H?launch=true&mode=full" target="_blank" rel="noopener noreferrer">
