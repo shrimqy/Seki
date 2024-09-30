@@ -5,6 +5,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.NetworkInformation;
+
 
 namespace Seki.App.Utils
 {
@@ -12,15 +14,27 @@ namespace Seki.App.Utils
     {
         public static string GetLocalIPAddress()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                // Filter by network interface type (Ethernet or Wireless) and operational status
+                if (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
                 {
-                    return ip.ToString();
+                    if (ni.OperationalStatus == OperationalStatus.Up)
+                    {
+                        // Get all unicast IPs (IPv4)
+                        foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip.Address))
+                            {
+                                // Return the first valid IPv4 address found
+                                return ip.Address.ToString();
+                            }
+                        }
+                    }
                 }
             }
-            throw new Exception("No network adapters with an IPv4 address in the system!");
+
+            throw new Exception("No network adapters with a valid IPv4 address found!");
         }
     }
 }
