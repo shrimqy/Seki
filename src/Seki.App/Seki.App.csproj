@@ -17,7 +17,7 @@
     </PropertyGroup>
 
 	<ItemGroup>
-		<Content CopyToOutputDirectory="PreserveNewest" Include="Assets\**" />
+		<Content CopyToOutputDirectory="Always" Include="Assets\**" />
 	</ItemGroup>
     <ItemGroup>
         <Manifest Include="$(ApplicationManifest)" />

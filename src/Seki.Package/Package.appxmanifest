@@ -4,12 +4,16 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
+  
   IgnorableNamespaces="uap rescap uap3">
 
   <Identity
     Name="shrimqy.Seki-PhoneLink"
-    Publisher="CN=BEC0F2AA-07EB-4762-A2FE-13550AF289A5"
+    Publisher="CN=Komuseki"
     Version="0.3.1.0" />
 
   <Properties>
@@ -45,7 +49,23 @@
           </uap:ShowNameOnTiles>
         </uap:DefaultTile >
         <uap:SplashScreen Image="Assets\AppTiles\SplashScreen.png" />
-      </uap:VisualElements>
+    </uap:VisualElements>
+	<Extensions>
+		<uap:Extension Category="windows.shareTarget">
+			<uap:ShareTarget>
+				<uap:SupportedFileTypes>
+					<uap:SupportsAnyFileType/>
+				</uap:SupportedFileTypes>
+				<uap:DataFormat>StorageItems</uap:DataFormat>
+			</uap:ShareTarget>
+		</uap:Extension>
+		<uap5:Extension Category="windows.startupTask">
+			<uap5:StartupTask
+			TaskId="8B5D3E3F-9B69-4E8A-A9F7-BFCA793B9AF0"
+			Enabled="false"
+			DisplayName="Seki" />
+		</uap5:Extension>
+	</Extensions>
     </Application>
   </Applications>
 
