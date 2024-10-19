@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Seki.App.Data.Models;
 using Seki.App.Services;
+using Seki.App.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,13 +23,13 @@ namespace Seki.App.ViewModels.Settings
         public DevicesViewModel()
         {
             _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-            WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
+            MessageHandler.DeviceInfoReceived += OnDeviceInfoReceived;
             // Load devices when the ViewModel is initialized
             _ = LoadDeviceInfoAsync();
 
         }
 
-        private void OnDeviceInfoReceived(Device? deviceInfo)
+        private void OnDeviceInfoReceived(object? sender, Device deviceInfo)
         {
             if (deviceInfo == null) return;
 
@@ -51,7 +52,7 @@ namespace Seki.App.ViewModels.Settings
 
         public void Cleanup()
         {
-            WebSocketService.Instance.DeviceInfoReceived -= OnDeviceInfoReceived;
+            MessageHandler.DeviceInfoReceived -= OnDeviceInfoReceived;
         }
 
         private async Task LoadDeviceInfoAsync()
@@ -62,7 +63,7 @@ namespace Seki.App.ViewModels.Settings
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
 
                 // Check if the file exists first to avoid FileNotFoundException
-                IStorageItem deviceInfoFileItem = await localFolder.TryGetItemAsync("deviceInfo.json");
+                IStorageItem deviceInfoFileItem = await localFolder.TryGetItemAsync("deviceList.json");
 
                 if (deviceInfoFileItem == null)
                 {

@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Seki.App.Data.Models;
 using Seki.App.Helpers;
 using Seki.App.Services;
+using Seki.App.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -67,9 +68,9 @@ namespace Seki.App.ViewModels
         public MainPageViewModel()
         {
             _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-            WebSocketService.Instance.ConnectionStatusChange += OnConnectionStatusChange;
-            WebSocketService.Instance.DeviceStatusReceived += OnDeviceStatusReceived;
-            WebSocketService.Instance.DeviceInfoReceived += OnDeviceInfoReceived;
+            SocketService.Instance.ClientConnectionStatusChanged += OnConnectionStatusChange;
+            MessageHandler.DeviceStatusReceived += OnDeviceStatusReceived;
+            MessageHandler.DeviceInfoReceived += OnDeviceInfoReceived;
             NotificationService.NotificationReceived += OnNotificationReceived;
             _ = LoadDeviceInfoAsync();
 
@@ -79,24 +80,7 @@ namespace Seki.App.ViewModels
             ClearAllNotificationsCommand = new RelayCommand(ClearAllNotifications);
         }
 
-        private void ClearAllNotifications()
-        {
-            // Clear the notifications list
-            RecentNotifications.Clear();
-            var command = new Command
-            { CommandType = nameof(CommandType.CLEAR_NOTIFICATIONS) };
-            string jsonMessage = SocketMessageSerializer.Serialize(command);
-            WebSocketService.Instance.SendMessage(jsonMessage);
-        }
-
-        private void ToggleConnection()
-        {
-            if (ConnectionStatus) 
-            {
-                WebSocketService.Instance.DisconnectAll();
-            }
-        }
-        private void OnConnectionStatusChange(bool connectionStatus)
+        private void OnConnectionStatusChange(object? sender, bool connectionStatus)
         {
             System.Diagnostics.Debug.WriteLine($"connection status changed");
 
@@ -113,12 +97,30 @@ namespace Seki.App.ViewModels
             }
         }
 
-        private void OnDeviceStatusReceived(DeviceStatus deviceStatus)
+        private void ClearAllNotifications()
+        {
+            // Clear the notifications list
+            RecentNotifications.Clear();
+            var command = new Command
+            { CommandType = nameof(CommandType.CLEAR_NOTIFICATIONS) };
+            string jsonMessage = SocketMessageSerializer.Serialize(command);
+            _ = SocketService.Instance.SendMessage(jsonMessage);
+        }
+
+        private void ToggleConnection()
+        {
+            if (ConnectionStatus) 
+            {
+                //SocketService.Instance.DisconnectAll();
+            }
+        }
+
+        private void OnDeviceStatusReceived(object? sender, DeviceStatus deviceStatus)
         {
             _dispatcher.TryEnqueue(() => DeviceStatus = deviceStatus);
         }
 
-        private void OnDeviceInfoReceived(Device? deviceInfo)
+        private void OnDeviceInfoReceived(object? sender, Device? deviceInfo)
         {
             if (deviceInfo != null)
             {
@@ -136,7 +138,7 @@ namespace Seki.App.ViewModels
             {
                 notificationToRemove.NotificationType = "REMOVED";
                 string jsonMessage = SocketMessageSerializer.Serialize(notificationToRemove);
-                WebSocketService.Instance.SendMessage(jsonMessage);
+                _ = SocketService.Instance.SendMessage(jsonMessage);
                 RecentNotifications.Remove(notificationToRemove);
                 System.Diagnostics.Debug.WriteLine($"Removed notification from RecentNotifications: {notificationToRemove.NotificationKey}");
             }
@@ -189,21 +191,16 @@ namespace Seki.App.ViewModels
         private async Task<BitmapImage> Base64ToBitmapImage(string base64String)
         {
             byte[] bytes = Convert.FromBase64String(base64String);
-            using (InMemoryRandomAccessStream stream = new())
-            {
-                await stream.WriteAsync(bytes.AsBuffer());
-                stream.Seek(0);
+            using InMemoryRandomAccessStream stream = new();
+            await stream.WriteAsync(bytes.AsBuffer());
+            stream.Seek(0);
 
-                BitmapImage image = new();
-                await image.SetSourceAsync(stream);
-                return image;
-            }
+            BitmapImage image = new();
+            await image.SetSourceAsync(stream);
+            return image;
         }
 
-        public void Cleanup()
-        {
-            WebSocketService.Instance.DeviceStatusReceived -= OnDeviceStatusReceived;
-            WebSocketService.Instance.DeviceInfoReceived -= OnDeviceInfoReceived;
+        public void Cleanup() {
             NotificationService.NotificationReceived -= OnNotificationReceived;
         }
 
@@ -212,20 +209,20 @@ namespace Seki.App.ViewModels
             try
             {
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceInfo.json");
+                StorageFile deviceInfoFile = await localFolder.GetFileAsync("deviceList.json");
 
                 // Read the file's contents
                 string json = await FileIO.ReadTextAsync(deviceInfoFile);
 
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    WriteIndented = true
+                };
+
                 // Deserialize the JSON into a List<Devices>
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true,
-                        WriteIndented = true
-                    };
-
                     var deviceList = JsonSerializer.Deserialize<List<Device>>(json, options);
                     return deviceList ?? [];  // Return the list or an empty list if null
                 }

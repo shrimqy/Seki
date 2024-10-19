@@ -25,6 +25,7 @@ namespace Seki.App.Helpers
                     .AddSingleton<HomeViewModel>()
                     .AddSingleton<GeneralViewModel>()
                     .AddSingleton<DevicesViewModel>()
+                    .AddSingleton<CastWindowViewModel>()
                 ).Build();
         }
     }

@@ -38,18 +38,17 @@ namespace Seki.App.Services
             {
                 if (SetProperty(ref _connectionStatus, value))
                 {
-                    OnConnectionStatusChange(_connectionStatus);
+                    OnConnectionStatusChange(null, _connectionStatus);
                 }
             }
         }
 
-
         private PlaybackService() 
         {
-            WebSocketService.Instance.ConnectionStatusChange += OnConnectionStatusChange;
+            SocketService.Instance.ClientConnectionStatusChanged += OnConnectionStatusChange;
         }
 
-        private void OnConnectionStatusChange(bool connectionStatus)
+        private void OnConnectionStatusChange(object? sender, bool connectionStatus)
         {
             ConnectionStatus = connectionStatus;
             TriggerPlaybackDataUpdate();
@@ -292,23 +291,23 @@ namespace Seki.App.Services
 
             if (!Enum.TryParse(message.MediaAction, true, out MediaAction action))
             {
-                System.Diagnostics.Debug.WriteLine($"Unknown action: {message.MediaAction}");
+                Debug.WriteLine($"Unknown action: {message.MediaAction}");
                 return;
             }
 
             // Handle volume change directly
-            if (action.Equals(MediaAction.VOLUME))
+            if (action.Equals(MediaAction.VOLUME) && message.Volume != null)
             {
-                VolumeControl.ChangeVolume(message.Volume);
+                VolumeControl.ChangeVolume((double)message.Volume);
                 return;
             }
 
             if (!_activeSessions.TryGetValue(message.AppName, out var session))
             {
-                System.Diagnostics.Debug.WriteLine($"No active media session found for {message.AppName}");
+                Debug.WriteLine($"No active media session found for {message.AppName}");
                 return;
             }
-
+            Debug.WriteLine($"action: {action}");
             switch (action)
             {
                 case MediaAction.RESUME:

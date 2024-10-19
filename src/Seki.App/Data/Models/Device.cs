@@ -8,6 +8,7 @@ namespace Seki.App.Data.Models
 {
     public class Device
     {
+        public string? DeviceId { get; set; }
         public string? Name { get; set; }
         public DateTime? LastConnected { get; set; }
     }

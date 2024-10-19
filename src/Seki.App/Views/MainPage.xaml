@@ -193,27 +193,60 @@
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="*" />
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind AppName}" />
-                                                    <TextBlock
-                                                        x:Name="TimeStampTextBlock"
-                                                        Grid.Column="1"
-                                                        Margin="0,0,0,0"
-                                                        Foreground="Gray"
-                                                        HorizontalTextAlignment="End"
-                                                        Text="{x:Bind TimeStamp, Converter={StaticResource DateTimeConverter}}"
-                                                        Visibility="Visible" />
-                                                    <Button
-                                                        x:Name="CloseButton"
-                                                        Grid.Column="1"
-                                                        Width="20"
-                                                        Height="20"
-                                                        Margin="0,0,0,0"
-                                                        Padding="0"
-                                                        Click="OnCloseButtonClick"
-                                                        IsHitTestVisible="False"
-                                                        Opacity="0"
-                                                        Style="{StaticResource AlternateCloseButtonStyle}"
-                                                        Tag="{x:Bind NotificationKey}" />
+                                                    <TextBlock Grid.Column="0" FontWeight="SemiBold" Text="{x:Bind AppName}" />
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                                                        <Button
+                                                            x:Name="MoreButton"
+                                                            Width="20"
+                                                            Height="20"
+                                                            Margin="0,0,0,0"
+                                                            Padding="0"
+                                                            IsHitTestVisible="False"
+                                                            Opacity="0"
+                                                            Background="Transparent"
+                                                            BorderBrush="Transparent"
+                                                            Tag="{x:Bind NotificationKey}">
+                                                            <SymbolIcon Symbol="More" />
+                                                            <Button.Flyout>
+                                                                <MenuFlyout Placement="BottomEdgeAlignedLeft" Closed="MoreButtonFlyoutClosed">
+                                                                    <MenuFlyoutItem 
+                                                                        Text="{x:Bind FlyoutFilterString}" 
+                                                                        Click="OnNotificationFilterClick"
+                                                                        Tag="{x:Bind AppName}">
+                                                                        <MenuFlyoutItem.Icon>
+                                                                            <FontIcon Glyph="&#xECE4;" />
+                                                                        </MenuFlyoutItem.Icon>
+                                                                    </MenuFlyoutItem>
+                                                                    <MenuFlyoutItem Text="Pin" Icon="Pin" />
+                                                                    <MenuFlyoutItem Text="Open in App">
+                                                                        <MenuFlyoutItem.Icon>
+                                                                            <FontIcon Glyph="&#xED35;" />
+                                                                        </MenuFlyoutItem.Icon>
+                                                                    </MenuFlyoutItem>
+                                                                </MenuFlyout>
+                                                            </Button.Flyout>
+                                                        </Button>
+                                                        <Button
+                                                            x:Name="CloseButton"
+                                                            Width="20"
+                                                            Height="20"
+                                                            Margin="0,0,0,0"
+                                                            Padding="0"
+                                                            Click="OnCloseButtonClick"
+                                                            IsHitTestVisible="False"
+                                                            Opacity="0"
+                                                            Style="{StaticResource AlternateCloseButtonStyle}"
+                                                            Tag="{x:Bind NotificationKey}" />
+                                                        <TextBlock
+                                                            x:Name="TimeStampTextBlock"
+                                                            Grid.Column="1"
+                                                            Margin="0,0,0,0"
+                                                            Foreground="Gray"
+                                                            HorizontalTextAlignment="End"
+                                                            Text="{x:Bind TimeStamp, Converter={StaticResource DateTimeConverter}}"
+                                                            Visibility="Visible" />
+                                                    </StackPanel>
+
                                                 </Grid>
 
 

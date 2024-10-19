@@ -1,9 +1,11 @@
 ﻿using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using Seki.App.Data;
 using Seki.App.Data.Models;
 using Seki.App.Helpers;
 using Seki.App.Services;
+using Seki.App.Utils;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
@@ -18,7 +20,7 @@ namespace Seki.App
 
         public new static App Current
              => (App)Application.Current;
-        private WebSocketService? _webSocketService;
+        private SocketService? _socketService;
         private PlaybackService? _playbackService;
         private MdnsService? _mdnsService;
 
@@ -27,7 +29,7 @@ namespace Seki.App
         public static ClipboardService ClipboardService => ClipboardService.Instance;
         public App()
         {
-            InitializeComponent();
+            this.InitializeComponent();
             CheckStartupSetting();
         }
 
@@ -39,7 +41,6 @@ namespace Seki.App
             {
                 // Get AppActivationArgumentsTask
                 var activatedEventArgs = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
-                System.Diagnostics.Debug.WriteLine(activatedEventArgs);
                 // Handle share activation
                 var kind = activatedEventArgs.Kind;
                 if (kind == ExtendedActivationKind.ShareTarget)
@@ -78,30 +79,29 @@ namespace Seki.App
                 var host = AppLifeCycleHelper.ConfigureHost();
                 Ioc.Default.ConfigureServices(host.Services);
 
+                DataAccess.InitializeDatabase();
+
                 _mdnsService = new MdnsService();
-                await _mdnsService.AdvertiseServiceAsync();
+                await _mdnsService.AdvertiseServiceAsync(false);
 
-                _webSocketService = WebSocketService.Instance;
-                _webSocketService.Start();
+                _socketService = SocketService.Instance;
+                _ = _socketService.StartServerAsync();
 
-                _webSocketService.DeviceInfoReceived += OnDeviceInfoReceived;
+                MessageHandler.DeviceInfoReceived += OnDeviceInfoReceived;
 
                 await InitializePlaybackServiceAsync();
 
                 ClipboardService.ClipboardContentChanged += OnClipboardContentChanged;
 
-                
-                var hasSavedDevices = await CheckForSavedDevicesAsync();
+               
                 // Initialize the main application after splash screen completes
                 _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
 
-                System.Diagnostics.Debug.WriteLine("await for task started");
-                await SplashScreenLoadingTCS.Task;
-                if (SplashScreenLoadingTCS.Task.Result)
-                {
-                    System.Diagnostics.Debug.WriteLine("inside if of result");
-                    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
-                }
+                //await SplashScreenLoadingTCS.Task;
+                //if (SplashScreenLoadingTCS.Task.Result)
+                //{
+                //    _ = MainWindow.Instance.InitializeApplicationAsync(activatedEventArgs.Data);
+                //}
             }
         }
 
@@ -210,10 +210,10 @@ namespace Seki.App
                 Volume = playbackData.Volume
             };
             string jsonMessage = SocketMessageSerializer.Serialize(playbackMessage);
-            _webSocketService?.SendMessage(jsonMessage);
+            _socketService?.SendMessage(jsonMessage);
         }
 
-        private void OnDeviceInfoReceived(Device? deviceInfo)
+        private void OnDeviceInfoReceived(object? sender, Device? deviceInfo)
         {
             if (SplashScreenLoadingTCS?.Task.IsCompleted == false || SplashScreenLoadingTCS?.Task == null)
             {
@@ -235,7 +235,7 @@ namespace Seki.App
             }
 
             System.Diagnostics.Debug.WriteLine("Clipboard triggered");
-            if (content != null && _webSocketService != null)
+            if (content != null && _socketService != null)
             {
                 var clipboardMessage = new ClipboardMessage
                 {
@@ -244,21 +244,20 @@ namespace Seki.App
                 };
                 System.Diagnostics.Debug.WriteLine("clipboard: " + clipboardMessage.Content);
                 string jsonMessage = SocketMessageSerializer.Serialize(clipboardMessage);
-                System.Diagnostics.Debug.WriteLine(jsonMessage);
-                _webSocketService.SendMessage(jsonMessage);
+                _ = _socketService.SendMessage(jsonMessage);
             }
         }
 
         private static async Task<List<Device>?> CheckForSavedDevicesAsync()
         {
             StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-            var deviceInfoFile = await localFolder.TryGetItemAsync("deviceInfo.json") as StorageFile;
+            var deviceInfoFile = await localFolder.TryGetItemAsync("deviceList.json") as StorageFile;
 
             // Check if the file exists
             if (deviceInfoFile == null)
             {
                 // Create the file with default content
-                deviceInfoFile = await localFolder.CreateFileAsync("deviceInfo.json", CreationCollisionOption.OpenIfExists);
+                deviceInfoFile = await localFolder.CreateFileAsync("deviceList.json", CreationCollisionOption.OpenIfExists);
                 await FileIO.WriteTextAsync(deviceInfoFile, "[]"); // Initialize with an empty JSON array
             }
 

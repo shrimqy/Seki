@@ -12,13 +12,14 @@ using Windows.Storage;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
+using FluentFTP.Helpers;
 
 namespace Seki.App.Services
 {
     public class NotificationService
     {
         private static readonly SemaphoreSlim _semaphore = new(1, 1);
-        private static readonly List<NotificationMessage> _notificationHistory = [];
+        private static readonly List<NotificationMessage> _notificationHistory = new();
         public static IReadOnlyList<NotificationMessage> NotificationHistory => _notificationHistory.AsReadOnly();
         public static event EventHandler<NotificationMessage>? NotificationReceived;
 
@@ -26,9 +27,23 @@ namespace Seki.App.Services
         {
             // Wait for the semaphore to be available before processing the notification
             await _semaphore.WaitAsync();
+            Debug.WriteLine($"Received notification: {JsonSerializer.Serialize(notificationMessage)}");
 
             try
             {
+                // Get the app package from the notification
+                string appName = notificationMessage.AppName;
+
+                // Retrieve notification preferences from the database
+                var filter = Data.DataAccess.GetNotificationFilter(appName);
+
+                // Check the filter for this appPackage
+                if (filter == NotificationFilter.DISABLED)
+                {
+                    Debug.WriteLine($"Notification disabled for {appName}, skipping...");
+                    return;  // Skip showing the notification if it's disabled
+                }
+
                 if (notificationMessage.Title != null && notificationMessage.AppName != notificationMessage.Title)
                 {
                     _notificationHistory.Add(notificationMessage);
@@ -44,7 +59,8 @@ namespace Seki.App.Services
                         notificationMessage.IconBase64 = notificationMessage.AppIcon;
                     }
 
-                    if (notificationMessage.NotificationType == "NEW")
+                    // Show notification if the type is NEW and the filter allows it
+                    if (notificationMessage.NotificationType == "NEW" && filter == NotificationFilter.TOASTEDFEED)
                     {
                         string tag = $"{notificationMessage.Tag}";
                         string group = $"{notificationMessage.GroupKey}";
@@ -52,7 +68,6 @@ namespace Seki.App.Services
                             .AddText(notificationMessage.AppName, new AppNotificationTextProperties().SetMaxLines(1))
                             .AddText(notificationMessage.Title)
                             .AddText(notificationMessage.Text)
-                            //.SetTag(tag)
                             .SetGroup(group);
 
                         // Add large icon
@@ -79,7 +94,7 @@ namespace Seki.App.Services
                     {
                         if (_notificationHistory.Remove(notificationToRemove))
                         {
-                            System.Diagnostics.Debug.WriteLine($"Removed notification: {notificationMessage.NotificationKey}");
+                            Debug.WriteLine($"Removed notification: {notificationMessage.NotificationKey}");
                         }
                     }
                     NotificationReceived?.Invoke(null, notificationMessage);
@@ -129,11 +144,9 @@ namespace Seki.App.Services
             StorageFile file = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
 
             // Properly disposing the file stream
-            using (var fileStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-            {
-                await RandomAccessStream.CopyAsync(stream, fileStream);
-                await fileStream.FlushAsync();
-            }
+            using var fileStream = await file.OpenAsync(FileAccessMode.ReadWrite);
+            await RandomAccessStream.CopyAsync(stream, fileStream);
+            await fileStream.FlushAsync();
         }
 
         public static async Task<BitmapImage> Base64ToBitmapImage(string base64String)
@@ -141,16 +154,13 @@ namespace Seki.App.Services
             byte[] bytes = Convert.FromBase64String(base64String);
 
             // Ensure the stream is properly disposed of
-            using (InMemoryRandomAccessStream stream = new InMemoryRandomAccessStream())
-            {
-                await stream.WriteAsync(bytes.AsBuffer());
-                stream.Seek(0);
+            using InMemoryRandomAccessStream stream = new();
+            await stream.WriteAsync(bytes.AsBuffer());
+            stream.Seek(0);
 
-                BitmapImage image = new BitmapImage();
-                await image.SetSourceAsync(stream);
-                return image;
-            }
+            BitmapImage image = new();
+            await image.SetSourceAsync(stream);
+            return image;
         }
-
     }
 }

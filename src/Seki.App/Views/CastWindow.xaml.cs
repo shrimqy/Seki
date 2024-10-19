@@ -27,6 +27,7 @@ using Windows.UI.Core;
 using Microsoft.UI.Input;
 using Windows.UI.WindowManagement;
 using System.Runtime.InteropServices;
+using Seki.App.ViewModels;
 
 namespace Seki.App.Views
 {
@@ -35,18 +36,22 @@ namespace Seki.App.Views
         private static CastWindow? _Instance;
         public static CastWindow Instance => _Instance ??= new();
 
+        public CastWindowViewModel ViewModel { get; }
+
         public IntPtr WindowHandle { get; }
         public CastWindow()
         {
 
             WindowHandle = this.GetWindowHandle();
-            this.InitializeComponent();
+            InitializeComponent();
 
-            this.ExtendsContentIntoTitleBar = true;  // enable custom titlebar
-            this.SetTitleBar(AppTitleBar);      // set user ui element as titlebar
+            ViewModel = Ioc.Default.GetRequiredService<CastWindowViewModel>();
 
-            MessageHandler.ScreenDataReceived += OnScreenDataReceived;
-            MessageHandler.ScreenTimeFrameReceived += OnScreenTimeFrameReceived;
+            ExtendsContentIntoTitleBar = true;  // enable custom titlebar
+            SetTitleBar(AppTitleBar);      // set user ui element as titlebar
+
+            //MessageHandler.ScreenDataReceived += OnScreenDataReceived;
+            //MessageHandler.ScreenTimeFrameReceived += OnScreenTimeFrameReceived;
 
             // Subscribe to the closed event to release resources
             this.Closed += OnWindowClosed;
@@ -235,7 +240,7 @@ namespace Seki.App.Views
                 Control = keyboardEvent
             };
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            _ = SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void SendKeyboardAction(string action)
@@ -252,7 +257,7 @@ namespace Seki.App.Views
             };
 
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            _ = SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void OnTapTimerTick(object sender, object e)
@@ -277,7 +282,7 @@ namespace Seki.App.Views
                 Control = tapEvent
             };
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void SendTapAndHoldEvent(double x, double y)
@@ -296,7 +301,7 @@ namespace Seki.App.Views
                 Control = tapAndHoldEvent
             };
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void SendSwipeEndEvent(Point start, Point end, double duration, bool willContinue)
@@ -319,7 +324,7 @@ namespace Seki.App.Views
                 Control = swipeEvent
             };
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            SocketService.Instance.SendMessage(jsonMessage);
 
             if (!willContinue)
             {
@@ -342,7 +347,7 @@ namespace Seki.App.Views
                 Control = scrollEvent
             };
             string jsonMessage = SocketMessageSerializer.Serialize(message);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void SetWindowProperties()
@@ -391,85 +396,85 @@ namespace Seki.App.Views
             appWindow.SetIcon(iconPath);
         }
 
-        // Variable to store the received screen time
-        private long _lastScreenTimeFrame;
+        //// Variable to store the received screen time
+        //private long _lastScreenTimeFrame;
 
-        // This method handles the reception of the screen time frame from the Android device
-        private void OnScreenTimeFrameReceived(object? sender, ScreenData data)
-        {
+        //// This method handles the reception of the screen time frame from the Android device
+        //private void OnScreenTimeFrameReceived(object? sender, ScreenData data)
+        //{
 
-            // Convert the received time (in milliseconds) to DateTime
-            _lastScreenTimeFrame = data.TimeStamp;
-        }
-        private void OnScreenDataReceived(object? sender, byte[] screenData)
-        {
-            // Get the current system time as Unix time in milliseconds
-            long currentUnixTimeInMilliseconds = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        //    // Convert the received time (in milliseconds) to DateTime
+        //    _lastScreenTimeFrame = data.TimeStamp;
+        //}
+        //private void OnScreenDataReceived(object? sender, byte[] screenData)
+        //{
+        //    // Get the current system time as Unix time in milliseconds
+        //    long currentUnixTimeInMilliseconds = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-            // Calculate the difference between the current time and the last screen time frame
-            var timeDifference = currentUnixTimeInMilliseconds - _lastScreenTimeFrame;
+        //    // Calculate the difference between the current time and the last screen time frame
+        //    var timeDifference = currentUnixTimeInMilliseconds - _lastScreenTimeFrame;
 
-            // Set your threshold (in milliseconds). For example, 100 ms
-            const int threshold = 500;
+        //    // Set your threshold (in milliseconds). For example, 100 ms
+        //    const int threshold = 500;
 
-            // Check if the time difference is within the acceptable range
-            if (timeDifference > threshold)
-            {
-                // Skip processing if the time difference is too large
-                System.Diagnostics.Debug.WriteLine($"Skipping frame due to time difference: {timeDifference} ms");
-                return;
-            }
+        //    // Check if the time difference is within the acceptable range
+        //    if (timeDifference > threshold)
+        //    {
+        //        // Skip processing if the time difference is too large
+        //        System.Diagnostics.Debug.WriteLine($"Skipping frame due to time difference: {timeDifference} ms");
+        //        return;
+        //    }
 
-            // Ensure this runs on the UI thread
-            DispatcherQueue.TryEnqueue(async () =>
-            {
-                // Start the stopwatch to measure processing time
-                //var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        //    // Ensure this runs on the UI thread
+        //    DispatcherQueue.TryEnqueue(async () =>
+        //    {
+        //        // Start the stopwatch to measure processing time
+        //        //var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                // Display the image using the binary data
-                var screenBitmap = await ConvertToImageSourceAsync(screenData);
-                if (screenBitmap != null)
-                {
-                    PhoneScreen.Source = screenBitmap;
-                }
+        //        // Display the image using the binary data
+        //        var screenBitmap = await ConvertToImageSourceAsync(screenData);
+        //        if (screenBitmap != null)
+        //        {
+        //            PhoneScreen.Source = screenBitmap;
+        //        }
 
-                // Stop the stopwatch and log the time taken
-                //stopwatch.Stop();
-                //System.Diagnostics.Debug.WriteLine($"Time taken to process and display image: {stopwatch.ElapsedMilliseconds} ms");
-            });
-        }
+        //        // Stop the stopwatch and log the time taken
+        //        //stopwatch.Stop();
+        //        //System.Diagnostics.Debug.WriteLine($"Time taken to process and display image: {stopwatch.ElapsedMilliseconds} ms");
+        //    });
+        //}
 
-        private async Task<BitmapImage?> ConvertToImageSourceAsync(byte[] data)
-        {
-            if (data == null || data.Length == 0)
-            {
-                System.Diagnostics.Debug.WriteLine("Invalid screen data: byte array is null or empty.");
-                return null; // Skip this frame
-            }
+        //private async Task<BitmapImage?> ConvertToImageSourceAsync(byte[] data)
+        //{
+        //    if (data == null || data.Length == 0)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine("Invalid screen data: byte array is null or empty.");
+        //        return null; // Skip this frame
+        //    }
 
-            using var stream = new MemoryStream(data);
-            var bitmapImage = new BitmapImage();
-            try
-            {
-                await bitmapImage.SetSourceAsync(stream.AsRandomAccessStream());
-            }
-            catch (COMException comEx)
-            {
-                // Handle the COMException specifically and skip the frame
-                System.Diagnostics.Debug.WriteLine($"COMException: Failed to set image source: {comEx.Message}");
-                System.Diagnostics.Debug.WriteLine($"Exception StackTrace: {comEx.StackTrace}");
-                return null; // Skip this frame and continue
-            }
-            catch (Exception ex)
-            {
-                // Handle any other unexpected exceptions
-                System.Diagnostics.Debug.WriteLine($"Error setting image source: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Exception StackTrace: {ex.StackTrace}");
-                return null; // Skip this frame and continue
-            }
+        //    using var stream = new MemoryStream(data);
+        //    var bitmapImage = new BitmapImage();
+        //    try
+        //    {
+        //        await bitmapImage.SetSourceAsync(stream.AsRandomAccessStream());
+        //    }
+        //    catch (COMException comEx)
+        //    {
+        //        // Handle the COMException specifically and skip the frame
+        //        System.Diagnostics.Debug.WriteLine($"COMException: Failed to set image source: {comEx.Message}");
+        //        System.Diagnostics.Debug.WriteLine($"Exception StackTrace: {comEx.StackTrace}");
+        //        return null; // Skip this frame and continue
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Handle any other unexpected exceptions
+        //        System.Diagnostics.Debug.WriteLine($"Error setting image source: {ex.Message}");
+        //        System.Diagnostics.Debug.WriteLine($"Exception StackTrace: {ex.StackTrace}");
+        //        return null; // Skip this frame and continue
+        //    }
 
-            return bitmapImage;
-        }
+        //    return bitmapImage;
+        //}
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
         {
@@ -488,14 +493,14 @@ namespace Seki.App.Views
                 Type = SocketMessageType.CommandType
             };
             string jsonMessage = SocketMessageSerializer.Serialize(closeEvent);
-            WebSocketService.Instance.SendMessage(jsonMessage);
+            SocketService.Instance.SendMessage(jsonMessage);
         }
 
         private void CleanUpResources()
         {
             // Unsubscribe from events to prevent memory leaks
-            MessageHandler.ScreenDataReceived -= OnScreenDataReceived;
-            MessageHandler.ScreenTimeFrameReceived -= OnScreenTimeFrameReceived;
+            //MessageHandler.ScreenDataReceived -= OnScreenDataReceived;
+            //MessageHandler.ScreenTimeFrameReceived -= OnScreenTimeFrameReceived;
             PhoneScreen.PointerPressed -= OnPointerPressed;
             PhoneScreen.PointerReleased -= OnPointerReleased;
             PhoneScreen.PointerWheelChanged -= OnPointerWheelChanged;

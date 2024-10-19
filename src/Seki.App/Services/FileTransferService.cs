@@ -89,7 +89,7 @@ namespace Seki.App.Services
                     break;
             }
         }
-
+        long totalBytesRead = 0;
         public async Task handleMetadata(FileMetadata metadata)
         {
             if (metadata != null)
@@ -101,6 +101,7 @@ namespace Seki.App.Services
 
                 try
                 {
+                    totalBytesRead = 0;
                     currentFileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
                     System.Diagnostics.Debug.WriteLine($"File stream created for {currentFileMetadata.FileName} at {FilePath}");
                 }
@@ -117,7 +118,6 @@ namespace Seki.App.Services
 
         public async Task ReceiveFileData(string base64Data)
         {
-            System.Diagnostics.Debug.WriteLine("current Filemetada: {}");
             if (currentFileStream == null || currentFileMetadata == null)
             {
                 System.Diagnostics.Debug.WriteLine("Received file data without metadata or file stream is not initialized");
@@ -127,11 +127,18 @@ namespace Seki.App.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine("Chunk Processing");
+
                 // Decode the Base64 string to a byte array
                 byte[] fileData = Convert.FromBase64String(base64Data);
 
                 // Write the byte array to the file stream
                 await currentFileStream.WriteAsync(fileData, 0, fileData.Length);
+
+                // Report progress (optional)
+
+                totalBytesRead += fileData.Length;
+                double progress = (double)totalBytesRead / currentFileMetadata.FileSize;
+                System.Diagnostics.Debug.WriteLine($"File transfer progress: {progress:P}");
 
                 // Check if the file transfer is complete
                 if (currentFileStream.Length >= currentFileMetadata.FileSize)
@@ -157,6 +164,7 @@ namespace Seki.App.Services
             currentFileStream.Close();
             currentFileStream.Dispose();
             currentFileStream = null;
+            totalBytesRead = 0;
 
             System.Diagnostics.Debug.WriteLine($"File saved to {Path.Combine(downloadFolder, currentFileMetadata.FileName)}");
 
@@ -236,7 +244,7 @@ namespace Seki.App.Services
         {
             try
             {
-                const int ChunkSize = 512 * 1024; // 512 * 1024 KB chunks
+                const int ChunkSize = 1024 * 1024; // 512 * 1024 KB chunks
                 var buffer = new Windows.Storage.Streams.Buffer((uint)ChunkSize);
                 using (var stream = await file.OpenReadAsync())
                 {
@@ -260,7 +268,7 @@ namespace Seki.App.Services
                     // Send metadata
                     string metadataJson = JsonSerializer.Serialize(metadataTransfer);
                     await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
-                        WebSocketService.Instance.SendMessage(metadataJson));
+                        SocketService.Instance.SendMessage(metadataJson));
 
                     // Send file contents in chunks
                     Windows.Storage.Streams.IBuffer readBuffer;
@@ -286,13 +294,13 @@ namespace Seki.App.Services
 
                         // Send chunk data
                         await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
-                            WebSocketService.Instance.SendMessage(jsonMessage));
+                            SocketService.Instance.SendMessage(jsonMessage));
 
                         totalBytesRead += readBuffer.Length;
 
                         // Report progress (optional)
                         double progress = (double)totalBytesRead / stream.Size;
-                        await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() => ReportProgress(progress));
+                        System.Diagnostics.Debug.WriteLine($"File transfer progress: {progress:P}");
                     }
                 }
             }
@@ -300,13 +308,6 @@ namespace Seki.App.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Error in SendFileViaWebSocket: {ex}");
             }
-        }
-
-        public void ReportProgress(double progress)
-        {
-            // Implement progress reporting logic here
-            // For example, update a progress bar in your UI
-            System.Diagnostics.Debug.WriteLine($"File transfer progress: {progress:P}");
         }
     }
 }

@@ -216,6 +216,14 @@ namespace Seki.App.Data.Models
             }
         }
 
+        [JsonIgnore]
+        public string? FlyoutFilterString { 
+            get
+            {
+                return $"Turn off Notifications from {AppName}";
+            }
+        }
+
         [JsonPropertyName("tag")]
         public string? Tag { get; set; }
 
@@ -263,6 +271,9 @@ namespace Seki.App.Data.Models
 
     public class DeviceInfo : SocketMessage
     {
+        [JsonPropertyName("deviceId")]
+        public string DeviceId { get; set; }
+
         [JsonPropertyName("deviceName")]
         public string DeviceName { get; set; }
 
@@ -303,7 +314,7 @@ namespace Seki.App.Data.Models
         public string? Artist { get; set; }
 
         [JsonPropertyName("volume")]
-        public float Volume { get; set; }
+        public float? Volume { get; set; }
 
         [JsonPropertyName("isPlaying")]
         public bool? IsPlaying { get; set; }
@@ -498,3 +509,4 @@ namespace Seki.App.Data.Models
         Tab, Backspace, Enter, Escape, CtrlC, CtrlV, CtrlX, CtrlA, CtrlZ, CtrlY, Shift
     }
 }
+ 

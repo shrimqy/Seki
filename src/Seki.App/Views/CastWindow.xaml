@@ -62,6 +62,7 @@
             PointerPressed="OnPointerPressed"
             PointerReleased="OnPointerReleased"
             PointerWheelChanged="OnPointerWheelChanged"
+            Source="{x:Bind ViewModel.PhoneScreenImage, Mode=OneWay}"
             Stretch="Uniform" />
     </Grid>
 </Window>
