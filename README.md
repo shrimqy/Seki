@@ -15,13 +15,13 @@
 
 ## Limitations
 
-- **Clipboard Sharing on Android 13+**:
-    - Due to Android's restrictions, clipboard sharing is only possible via the share sheet after Android 13.
+- **Clipboard Sharing**:
+    - Due to Android's restrictions, clipboard sharing is only possible manually.
 - **Remote Control**:
-   - Keyboard input works optimally on android 13+
-- **FTP**
+   - Keyboard input works optimally only on android 13 and above
+- **File Transfer**
    - File transfer could be corrupted at times, will be fixed soon. 
-  
+
 ## Installation
 
 <p align="left">
@@ -60,8 +60,18 @@
 
 ## Roadmap
 
+(Most of these Features will be up in the next update)
+
 - Notification Actions.
-- Exploring Device Files.
+- Filter Notifications by app.
+- Customizable startup settings.
+- Add "Copy to Clipboard" action in the notification.
+- Configure clipboard to work automatically till android 10.
+- Exploring Device Files (Planning to integrate it into Windows Explorer).
+- Allow using the device as a webcam.
+- Windows Widget Support.
+- Calls and SMS Feature.
+
 
 ## Tech Stack
 
