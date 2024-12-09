@@ -1,0 +1,273 @@
+<Page
+    x:Class="Sefirah.App.Views.Settings.FeaturesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:Sefirah.App.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Sefirah.App.Data.Models"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="FeaturePage"
+    DataContext="{x:Bind ViewModel, Mode=OneWay}"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <converters:NotificationFilterConverter x:Key="NotificationFilterConverter" />
+    </Page.Resources>
+
+    <!--  Wrap the StackPanel in a ScrollViewer for scrollability  -->
+    <ScrollViewer Padding="0">
+        <StackPanel Spacing="10">
+
+            <!--  Title  -->
+            <TextBlock
+                FontSize="25"
+                FontWeight="Medium"
+                Text="Features" />
+
+            <!--  Clipboard Settings  -->
+            <StackPanel>
+                <Expander
+                    x:Name="ClipboardExpander"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left">
+                    <Expander.Header>
+                        <StackPanel Padding="0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon
+                                    Grid.Column="0"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Glyph="&#xF0E3;" />
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        VerticalAlignment="Center"
+                                        FontSize="15"
+                                        Text="Clipboard Sync" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Margin="0,5,0,0"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemBaseMediumHighColor}"
+                                        Text="Sync your clipboard across devices when enabled." />
+                                </StackPanel>
+                                <ToggleSwitch
+                                    x:Name="ClipboardSyncToggleSwitch"
+                                    Grid.Column="2"
+                                    Margin="0,0,-50,0"
+                                    Toggled="ClipboardSyncToggleSwitch_Toggled" />
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel>
+                            <CheckBox
+                                x:Name="ClipboardFilesCheckBox"
+                                Checked="ClipboardFilesToggle"
+                                Content="Copy Received Files to Clipboard"
+                                Unchecked="ClipboardFilesToggle" />
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+            </StackPanel>
+
+            <StackPanel>
+                <!--  Notification Expander  -->
+                <Expander
+                    x:Name="NotificationExpander"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch">
+                    <Expander.Header>
+                        <StackPanel Padding="0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon
+                                    Grid.Column="0"
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Glyph="&#xF0E3;" />
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        VerticalAlignment="Center"
+                                        FontSize="15"
+                                        Text="Notifications" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Margin="0,5,0,0"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemBaseMediumHighColor}"
+                                        Text="Show notifications on your PC" />
+                                </StackPanel>
+
+                                <ToggleSwitch
+                                    x:Name="NotificationToggleSwitch"
+                                    Grid.Column="2"
+                                    Margin="0,0,-50,0"
+                                    Toggled="NotificationToggleSwitch_Toggled" />
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Header>
+
+                    <Expander.Content>
+                        <StackPanel Spacing="10">
+                            <!--  General Notification Settings Section  -->
+                            <Border
+                                Padding="16"
+                                Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <StackPanel Spacing="16">
+                                    <CheckBox
+                                        x:Name="NotificationToastsCheckBox"
+                                        Checked="NotificationToasts_Toggled"
+                                        Content="Show notification toasts"
+                                        Unchecked="NotificationToasts_Toggled" />
+                                    <CheckBox
+                                        x:Name="NotificationBadgeCheckBox"
+                                        Checked="NotificationBadge_Toggled"
+                                        Content="Show badge on taskbar"
+                                        Unchecked="NotificationBadge_Toggled" />
+                                    <CheckBox
+                                        x:Name="NotificationLaunchPreferenceCheckBox"
+                                        Checked="NotificationLaunch_Toggled"
+                                        Content="Open cast window on notification launch"
+                                        Unchecked="NotificationLaunch_Toggled" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Per-App Notification Settings Section  -->
+                            <Expander
+                                x:Name="AppNotificationExpander"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                CornerRadius="8">
+                                <Expander.Header>
+                                    <TextBlock Text="App-Specific Settings" />
+                                </Expander.Header>
+                                <Expander.Content>
+                                    <ItemsControl ItemsSource="{x:Bind ViewModel.NotificationPreferences, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="local:NotificationPreferences">
+                                                <Grid Padding="16,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Image
+                                                        Grid.Column="0"
+                                                        Width="32"
+                                                        Height="32"
+                                                        Margin="0,0,12,0"
+                                                        VerticalAlignment="Center"
+                                                        Source="{x:Bind AppIcon}" />
+
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        Text="{x:Bind AppName}" />
+
+                                                    <Button Grid.Column="2" Content="{x:Bind NotificationFilter, Mode=OneWay, Converter={StaticResource NotificationFilterConverter}}">
+                                                        <Button.Flyout>
+                                                            <MenuFlyout>
+                                                                <MenuFlyoutItem Click="OnMenuFlyoutItemClick" Text="Notification feed + toast">
+                                                                    <MenuFlyoutItem.Tag>
+                                                                        <local:NotificationPreferences
+                                                                            AppName="{x:Bind AppName}"
+                                                                            AppPackage="{x:Bind AppPackage}"
+                                                                            NotificationFilter="TOASTEDFEED" />
+                                                                    </MenuFlyoutItem.Tag>
+                                                                </MenuFlyoutItem>
+                                                                <MenuFlyoutItem Click="OnMenuFlyoutItemClick" Text="Notification feed">
+                                                                    <MenuFlyoutItem.Tag>
+                                                                        <local:NotificationPreferences
+                                                                            AppName="{x:Bind AppName}"
+                                                                            AppPackage="{x:Bind AppPackage}"
+                                                                            NotificationFilter="FEED" />
+                                                                    </MenuFlyoutItem.Tag>
+                                                                </MenuFlyoutItem>
+
+                                                                <MenuFlyoutItem Click="OnMenuFlyoutItemClick" Text="Disabled">
+                                                                    <MenuFlyoutItem.Tag>
+                                                                        <local:NotificationPreferences
+                                                                            AppName="{x:Bind AppName}"
+                                                                            AppPackage="{x:Bind AppPackage}"
+                                                                            NotificationFilter="DISABLED" />
+                                                                    </MenuFlyoutItem.Tag>
+                                                                </MenuFlyoutItem>
+                                                            </MenuFlyout>
+                                                        </Button.Flyout>
+                                                    </Button>
+
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                </Expander.Content>
+                            </Expander>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+            </StackPanel>
+
+            <!--  Save Location  -->
+            <Border
+                Padding="15"
+                Background="{ThemeResource CardBackgroundFillColorDefault}"
+                CornerRadius="10">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <SymbolIcon
+                            Grid.Column="0"
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,10,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Symbol="Folder" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontSize="15"
+                            Text="Save Location" />
+                        <Button
+                            Grid.Column="2"
+                            Margin="0,0,30,0"
+                            Click="SelectSaveLocation_Click"
+                            Content="Select Location" />
+                    </Grid>
+                    <TextBlock x:Name="SelectedLocationTextBlock" Text="No location selected" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
